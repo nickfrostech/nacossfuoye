@@ -218,7 +218,7 @@ export default function GamesDirectory() {
                   <div
                      key={game.slug}
                      className={`rounded-3xl border-2 ${isComing
-                        ? 'bg-gradient-to-b from-white to-amber-50/25 border-dashed border-amber-300'
+                        ? 'bg-linear-to-b from-white to-amber-50/25 border-dashed border-amber-300'
                         : isActive
                            ? 'bg-white border-indigo-600'
                            : 'bg-white border-slate-200 hover:border-indigo-300'
