@@ -25,6 +25,15 @@ export const GAMES = [
       description: 'Test your internal clock. Can you guess exactly when the target time has passed without looking?',
       howToPlay: 'Look at the Target Time. Click "Start Timer" and wait. When you think the exact amount of time has passed, click "Stop Timer!". The closer you are to the target (in milliseconds), the higher your score!',
       isActive: false,
+   },
+   {
+      slug: 'stroop-challenge',
+      name: 'Stroop Challenge',
+      developer: 'apcodesphere',
+      developerLink: 'https://github.com/apreezofficial',
+      description: 'Match colours and text under pressure. Can you ignore the word and pick the right card?',
+      howToPlay: 'Read the instruction: find the card whose background, text colour or word matches the target colour. You have 5 seconds per round and 3 lives. Wrong picks and timeouts cost a life. Tap a card or press keys 1-4. Each correct answer adds a point.',
+      isActive: false,
    }
 ];
 
