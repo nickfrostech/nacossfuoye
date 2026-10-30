@@ -123,38 +123,47 @@ export async function submitScore(data, sessionToken) {
 
    const supabase = createClient(supabaseUrl, supabaseKey);
 
+   const cleanName = data.gaming_name.trim();
+
    // 1. Check if the player already has a score for this game
    const { data: existingRecords, error: fetchError } = await supabase
       .from('game_scores')
       .select('id, score')
       .eq('game_slug', data.game_slug)
-      .eq('gaming_name', data.gaming_name);
+      .ilike('gaming_name', cleanName)
+      .order('score', { ascending: false });
 
    if (fetchError) {
       console.error('Supabase Fetch Error:', fetchError);
       return { success: false, error: fetchError.message };
    }
 
-   const existingRecord = existingRecords?.[0];
+   const bestExisting = existingRecords?.[0];
 
-   if (existingRecord) {
+   if (bestExisting) {
       // 2. If new score is higher, update it. If not, ignore it.
-      if (data.score > existingRecord.score) {
+      if (data.score > bestExisting.score) {
          const { error: updateError } = await supabase
             .from('game_scores')
-            .update({ score: data.score, level: data.level })
-            .eq('id', existingRecord.id);
+            .update({ score: data.score, level: data.level, gaming_name: cleanName })
+            .eq('id', bestExisting.id);
 
          if (updateError) {
             console.error('Supabase Update Error:', updateError);
             return { success: false, error: updateError.message };
          }
       }
+
+      // Automatically clean up any duplicate rows for this player if they exist
+      if (existingRecords.length > 1) {
+         const duplicateIds = existingRecords.slice(1).map((r) => r.id);
+         await supabase.from('game_scores').delete().in('id', duplicateIds);
+      }
    } else {
       // 3. No existing score found, insert a new row
       const { error: insertError } = await supabase.from('game_scores').insert({
          game_slug: data.game_slug,
-         gaming_name: data.gaming_name,
+         gaming_name: cleanName,
          level: data.level,
          score: data.score
       });
@@ -179,17 +188,30 @@ export async function getLeaderboard(game_slug) {
 
    const supabase = createClient(supabaseUrl, supabaseKey);
 
+   // Fetch top scores ordered by score descending
    const { data, error } = await supabase
       .from('game_scores')
       .select('gaming_name, level, score')
       .eq('game_slug', game_slug)
       .order('score', { ascending: false })
-      .limit(10);
+      .limit(30);
 
    if (error) {
       console.error('Supabase Fetch Error (Leaderboard):', error);
       return [];
    }
 
-   return data || [];
+   // Deduplicate by player name so each player appears only once with their highest score
+   const seen = new Set();
+   const uniqueLeaderboard = [];
+   for (const row of (data || [])) {
+      const key = row.gaming_name?.trim().toLowerCase();
+      if (key && !seen.has(key)) {
+         seen.add(key);
+         uniqueLeaderboard.push(row);
+         if (uniqueLeaderboard.length === 10) break;
+      }
+   }
+
+   return uniqueLeaderboard;
 }
