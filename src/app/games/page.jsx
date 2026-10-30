@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { GAMES, getActiveGame } from './games';
-import { Trophy, ArrowRight, ExternalLink } from 'lucide-react';
+import { getActiveGame, getVisibleGames, isGameActive, isGameComingSoon } from './games';
+import { Trophy, ArrowRight, ExternalLink, Sparkles, Lock } from 'lucide-react';
 import { GamePad } from '@esvigy/react';
 import { getLeaderboard } from './actions';
 
@@ -42,7 +42,7 @@ export default function GamesDirectory() {
       };
    }, [activeGame]);
 
-   const allGames = GAMES;
+   const allGames = getVisibleGames();
 
    return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -210,38 +210,71 @@ export default function GamesDirectory() {
          </div>
 
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {allGames.map((game) => (
-               <div
-                  key={game.slug}
-                  className={`bg-white rounded-3xl border-2 ${game.isActive
-                        ? 'border-indigo-600'
-                        : 'border-slate-200 hover:border-indigo-300'
-                     } p-6 transition-all flex flex-col relative`}
-               >
-                  {game.isActive && (
-                     <div className="absolute -top-3 -right-3 bg-indigo-700 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                        Active Weekly
-                     </div>
-                  )}
-                  <h3 className="text-2xl font-extrabold mb-1 text-slate-900">{game.name}</h3>
-                  <div className="flex justify-between items-start mb-3">
-                     <div className="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-100 inline-block w-fit">
-                        By <a href={game.developerLink} target="_blank" rel="noreferrer" className="text-indigo-700 hover:underline font-bold">{game.developer}</a>
-                     </div>
-                  </div>
-                  <p className="text-slate-600 mb-6 grow text-sm leading-relaxed font-medium">{game.description}</p>
+            {allGames.map((game) => {
+               const isActive = isGameActive(game);
+               const isComing = isGameComingSoon(game);
 
-                  <Link
-                     href={`/games/${game.slug}`}
-                     className={`w-full text-center font-bold py-3 rounded-xl transition-colors mt-auto cursor-pointer ${game.isActive
-                           ? 'bg-indigo-700 hover:bg-indigo-800 text-white'
-                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                        }`}
+               return (
+                  <div
+                     key={game.slug}
+                     className={`rounded-3xl border-2 ${isComing
+                        ? 'bg-gradient-to-b from-white to-amber-50/25 border-dashed border-amber-300'
+                        : isActive
+                           ? 'bg-white border-indigo-600'
+                           : 'bg-white border-slate-200 hover:border-indigo-300'
+                        } p-6 transition-all flex flex-col relative`}
                   >
-                     Play Now
-                  </Link>
-               </div>
-            ))}
+                     {isActive && (
+                        <div className="absolute -top-3 -right-3 bg-indigo-700 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                           Active Weekly
+                        </div>
+                     )}
+                     {isComing && (
+                        <div className="absolute -top-3 -right-3 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                           <Sparkles size={12} />
+                           <span>Coming Soon</span>
+                        </div>
+                     )}
+                     <h3 className="text-2xl font-extrabold mb-1 text-slate-900">{game.name}</h3>
+                     <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100 inline-block w-fit">
+                           By <a href={game.developerLink} target="_blank" rel="noreferrer" className="text-indigo-700 hover:underline font-bold">{game.developer}</a>
+                        </div>
+                        {game.releaseDate && (
+                           <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border ${isComing
+                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              : 'bg-slate-50 text-slate-400 border-slate-100'
+                              }`}>
+                              {isComing ? `Releases ${game.releaseDate}` : game.releaseDate}
+                           </span>
+                        )}
+                     </div>
+                     <p className="text-slate-600 mb-6 grow text-sm leading-relaxed font-medium">{game.description}</p>
+
+                     {isComing ? (
+                        <button
+                           type="button"
+                           disabled
+                           aria-disabled="true"
+                           className="w-full text-center font-bold py-3 px-4 rounded-xl bg-amber-50 text-amber-700/80 border border-amber-200/70 mt-auto flex items-center justify-center gap-2 text-sm cursor-not-allowed select-none pointer-events-none"
+                        >
+                           <Lock size={15} className="text-amber-600/80" />
+                           <span>Coming Soon &bull; {game.releaseDate}</span>
+                        </button>
+                     ) : (
+                        <Link
+                           href={`/games/${game.slug}`}
+                           className={`w-full text-center font-bold py-3 rounded-xl transition-colors mt-auto cursor-pointer ${isActive
+                              ? 'bg-indigo-700 hover:bg-indigo-800 text-white'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                              }`}
+                        >
+                           Play Now
+                        </Link>
+                     )}
+                  </div>
+               );
+            })}
          </div>
 
          {/* Game Contribution Notice */}
