@@ -1,10 +1,15 @@
+<!-- @format -->
+
 ## 📝 Description
+
 Provide a concise overview of what this pull request changes, adds, or fixes.
 
 ## 🔗 Related Issue
-Closes # *(or Fixes #)*
+
+Closes # _(or Fixes #)_
 
 ## 🧭 Hub / Area Affected
+
 - [ ] Memos (`/memos`, `/[reference]`)
 - [ ] Academics & Software Materials (`/academics`)
 - [ ] BuildLab & Student Venture Incubator (`/buildlab`)
@@ -16,18 +21,23 @@ Closes # *(or Fixes #)*
 - [ ] Navigation / Footer / Common Components
 - [ ] Database Schema / SQL Migrations
 - [ ] Documentation / CI
+- [ ] Others
 
 ## 🛠️ Changes Made
+
 - Summary of technical changes made in this branch
 - Files added, modified, or removed
 
 ## 📸 Screenshots / Demos (If Applicable)
-| Before | After |
-| :---: | :---: |
-| *image / none* | *image / none* |
+
+|     Before     |     After      |
+| :------------: | :------------: |
+| _image / none_ | _image / none_ |
 
 ## ✅ Contributor Checklist
+
 Before submitting this pull request, please verify:
+
 - [ ] My PR addresses **ONE** specific issue or feature (atomic pull request).
 - [ ] My code adheres to the project's coding style and conventions (functional React, Tailwind CSS, pnpm).
 - [ ] I have run `pnpm lint` locally and resolved all warnings and errors.

@@ -108,4 +108,13 @@ export const PORTAL_CONTRIBUTORS = [
       html_url: 'https://github.com/nickfrostech',
       bio: 'Architected and built the core NACOSS FUOYE portal infrastructure, memo systems, and games engine.',
    },
+   {
+      login: 'apreezofficial',
+      name: 'Precious Adedokun (apcodesphere)',
+      level: '200 Level',
+      role: 'Arcade Arena Contributor',
+      avatar_url: 'https://avatars.githubusercontent.com/u/193069706?v=4',
+      html_url: 'https://github.com/apreezofficial',
+      bio: 'Developed and integrated the Stroop Challenge colour and reflex game for the NACOSS Arcade Arena.',
+   },
 ];

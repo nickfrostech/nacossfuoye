@@ -15,7 +15,7 @@ const REPO_URL = 'https://github.com/nickfrostech/nacossfuoye';
 export default function ContributorsSection() {
 
    return (
-      <section className="w-full mt-16 mb-12">
+      <section id="contributors" className="w-full mt-16 mb-12">
          {/* Section Header */}
          <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
