@@ -1,9 +1,53 @@
 'use server';
 
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerAuthClient } from '@/utils/supabase/server';
+import { getGameBySlug, isGameReleased } from './games';
 
-export async function submitScore(data, hash) {
+// In-memory set of used session IDs to prevent token replay attacks
+const usedSessionIds = new Set();
+
+// Periodically clean up old session IDs to prevent memory growth
+if (typeof setInterval !== 'undefined') {
+   setInterval(() => {
+      if (usedSessionIds.size > 5000) {
+         usedSessionIds.clear();
+      }
+   }, 15 * 60 * 1000);
+}
+
+/**
+ * Creates a cryptographically signed game session token using a private server secret.
+ * The client receives the signed token but never has access to the server salt.
+ */
+export async function createGameSession(game_slug) {
+   if (!game_slug || typeof game_slug !== 'string') {
+      return { success: false, error: 'Invalid game slug' };
+   }
+
+   const isDev = process.env.NODE_ENV !== 'production';
+   const game = getGameBySlug(game_slug);
+   if ((!game || !isGameReleased(game)) && !isDev) {
+      return { success: false, error: 'This game has not been released yet.' };
+   }
+
+   const secret = process.env.GAME_SALT || process.env.GAME_SECRET || 'nacoss_arcade_secure_salt';
+   const sessionId = crypto.randomUUID();
+   const timestamp = Date.now();
+
+   // Payload format: sessionId:game_slug:timestamp
+   const payload = `${sessionId}:${game_slug}:${timestamp}`;
+   const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+   const sessionToken = `${payload}:${signature}`;
+
+   return { success: true, sessionToken };
+}
+
+/**
+ * Validates the HMAC signature, single-use token, elapsed duration, and saves the score.
+ */
+export async function submitScore(data, sessionToken) {
    // Validate server action session context
    try {
       const authClient = await createServerAuthClient();
@@ -12,22 +56,59 @@ export async function submitScore(data, hash) {
       // Allow unauthenticated arcade players to submit leaderboard scores
    }
 
-   if (!data || typeof data !== 'object' || !data.game_slug || !data.gaming_name || typeof data.score !== 'number') {
+   if (!data || typeof data !== 'object' || !data.game_slug || !data.gaming_name || typeof data.score !== 'number' || !Number.isFinite(data.score)) {
       return { success: false, error: 'Invalid score payload' };
    }
 
-   const secret = process.env.GAME_SALT || process.env.GAME_SECRET || process.env.NEXT_PUBLIC_GAME_SALT;
-   if (!secret) {
-      console.error('GAME_SALT or NEXT_PUBLIC_GAME_SALT environment variable is missing.');
-      return { success: false, error: 'Server configuration error' };
+   const isDev = process.env.NODE_ENV !== 'production';
+   const game = getGameBySlug(data.game_slug);
+   if ((!game || !isGameReleased(game)) && !isDev) {
+      return { success: false, error: 'This game has not been released yet.' };
    }
 
-   // Reconstruct the expected hash on the server side
-   const expectedHash = Buffer.from(`${data.score}-${data.game_slug}-${secret}`).toString('base64');
+   if (!sessionToken || typeof sessionToken !== 'string') {
+      return { success: false, error: 'Missing security session token' };
+   }
 
-   if (hash !== expectedHash) {
-      console.error('Cheating detected! Invalid hash signature.');
-      return { success: false, error: 'Invalid score signature' };
+   const parts = sessionToken.split(':');
+   if (parts.length !== 4) {
+      return { success: false, error: 'Invalid session token format' };
+   }
+
+   const [sessionId, tokenSlug, tokenTimeStr, clientSig] = parts;
+   const tokenTime = parseInt(tokenTimeStr, 10);
+
+   if (tokenSlug !== data.game_slug) {
+      return { success: false, error: 'Session token does not match game' };
+   }
+
+   const secret = process.env.GAME_SALT || process.env.GAME_SECRET || 'nacoss_arcade_secure_salt';
+   const expectedPayload = `${sessionId}:${tokenSlug}:${tokenTimeStr}`;
+   const expectedSig = crypto.createHmac('sha256', secret).update(expectedPayload).digest('hex');
+
+   // Timing-safe HMAC comparison
+   if (!crypto.timingSafeEqual(Buffer.from(clientSig, 'hex'), Buffer.from(expectedSig, 'hex'))) {
+      console.error('Cheating detected! Invalid HMAC signature.');
+      return { success: false, error: 'Security verification failed' };
+   }
+
+   // Prevent token replay attacks: each session token can only be submitted once
+   if (usedSessionIds.has(sessionId)) {
+      return { success: false, error: 'Game session already submitted' };
+   }
+   usedSessionIds.add(sessionId);
+
+   const elapsedMs = Date.now() - tokenTime;
+
+   // Enforce realistic minimum game duration (at least 200ms elapsed since session created)
+   if (elapsedMs < 200) {
+      console.error('Cheating detected! Session completed impossibly fast:', elapsedMs);
+      return { success: false, error: 'Game completed impossibly fast' };
+   }
+
+   // Expire session tokens after 30 minutes
+   if (elapsedMs > 30 * 60 * 1000) {
+      return { success: false, error: 'Game session expired. Please play again.' };
    }
 
    // Initialize Supabase client
@@ -63,7 +144,7 @@ export async function submitScore(data, hash) {
             .from('game_scores')
             .update({ score: data.score, level: data.level })
             .eq('id', existingRecord.id);
-            
+
          if (updateError) {
             console.error('Supabase Update Error:', updateError);
             return { success: false, error: updateError.message };

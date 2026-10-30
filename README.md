@@ -78,7 +78,7 @@ Populate your `.env` with your project keys:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-NEXT_PUBLIC_GAME_SALT=the_binaries_weekly_game
+GAME_SALT=the_binaries_weekly_game
 ```
 
 ### 4. Database Setup

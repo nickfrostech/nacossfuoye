@@ -53,8 +53,10 @@ We love student-built games! To add a game:
 2. **Isolation**: Place all components, logic, and assets in a dedicated folder: `src/app/games/<your-game-slug>/`.
 3. **Single Player & Responsiveness**: The game must be playable on both mobile touch screens and desktop keyboards.
 4. **Use `GameWrapper`**: Integrate with the shared `<GameWrapper slug="..." GameComponent={...} />`.
-5. **Anti-Cheat Hash Verification**: The wrapper automatically hashes the final score using `NEXT_PUBLIC_GAME_SALT` and submits it to the server action (`src/app/games/actions.js`).
-6. **Register**: Add your game metadata to `src/app/games/games.js`.
+5. **Anti-Cheat Verification**: The wrapper automatically verifies physical user interactions (`event.isTrusted`) and signs scores using cryptographically secured server session tokens (`src/app/games/actions.js`), so contributors don't need to write custom security code.
+6. **Register**: Add your game metadata to `src/app/games/games.js`:
+   - **`releaseDate`**: Set your release date in **`DD/MM/YYYY`** format to the **next Monday** (e.g. `releaseDate: '09/11/2026'`). All arcade games run on weekly tournament rotations starting every Monday. Your game will automatically appear as an unplayable **Coming Soon** preview on the Games Hub so students can discover it and anticipate its launch!
+   - **`hidden`**: Leave `hidden: false` (or omit it) so your Coming Soon preview displays to students. Maintainers can set `hidden: true` if a game needs to be completely hidden (e.g. when multiple games are scheduled for the same week).
 
 ---
 

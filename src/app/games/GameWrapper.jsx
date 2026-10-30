@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { getGameBySlug } from './games';
-import { ArrowLeft, Trophy, Code, Settings } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, notFound } from 'next/navigation';
+import { getGameBySlug, isGameReleased, isGameActive, isGameComingSoon } from './games';
+import { ArrowLeft, Trophy, Code, Settings, Star, Lock, Sparkles, Clock, ArrowRight } from 'lucide-react';
 import { GamePad } from '@esvigy/react';
 
-import { submitScore, getLeaderboard } from './actions';
-import { Star } from 'lucide-react';
+import { submitScore, getLeaderboard, createGameSession } from './actions';
 
 export default function GameWrapper({ slug, GameComponent }) {
    const router = useRouter();
@@ -22,7 +21,40 @@ export default function GameWrapper({ slug, GameComponent }) {
    const [leaderboard, setLeaderboard] = useState([]);
    const [loadingBoard, setLoadingBoard] = useState(true);
 
+   // Anti-Cheat: Tracks verified physical human hardware interactions
+   const humanInputsRef = useRef({ count: 0, startTime: 0, lastTime: 0 });
+   // Anti-Cheat: Cryptographic server-signed session token (no public salt)
+   const sessionTokenRef = useRef(null);
+
+   const handleInteraction = useCallback((e) => {
+      // Browser strictly guarantees isTrusted = true only for real hardware inputs (mouse, touch, keyboard)
+      if (e?.isTrusted) {
+         if (humanInputsRef.current.count === 0) {
+            humanInputsRef.current.startTime = Date.now();
+         }
+         humanInputsRef.current.count += 1;
+         humanInputsRef.current.lastTime = Date.now();
+      }
+   }, []);
+
+   const refreshSession = useCallback(async () => {
+      if (!game?.slug) return;
+      try {
+         const res = await createGameSession(game.slug);
+         if (res?.success && res.sessionToken) {
+            sessionTokenRef.current = res.sessionToken;
+         }
+      } catch (err) {
+         console.error('Failed to init secure game session:', err);
+      }
+   }, [game?.slug]);
+
+   useEffect(() => {
+      refreshSession();
+   }, [refreshSession]);
+
    const fetchBoard = useCallback(async () => {
+      if (!game?.slug) return;
       const data = await getLeaderboard(game.slug);
       if (data && data.length > 0) {
          const ranked = data.map((item, index) => ({
@@ -34,7 +66,7 @@ export default function GameWrapper({ slug, GameComponent }) {
          setLeaderboard(ranked);
       }
       setLoadingBoard(false);
-   }, [game.slug]);
+   }, [game?.slug]);
 
    useEffect(() => {
       fetchBoard();
@@ -52,7 +84,91 @@ export default function GameWrapper({ slug, GameComponent }) {
       }
    }, []);
 
-   if (!game) return <div className="text-center mt-20 text-2xl font-bold">Game not found</div>;
+   if (!game || game.hidden) {
+      notFound();
+   }
+
+   const isDev = process.env.NODE_ENV !== 'production';
+   const isDevBypass = isDev && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('dev') === 'true';
+
+   if ((isGameComingSoon(game) || !isGameReleased(game)) && !isDevBypass) {
+      return (
+         <main className="max-w-2xl mx-auto p-4 md:p-8">
+            <button
+               onClick={() => router.push('/games')}
+               className="inline-flex items-center text-slate-500 hover:text-indigo-700 font-medium mb-6 transition-colors"
+            >
+               <ArrowLeft size={18} className="mr-2" /> Back to Games Hub
+            </button>
+
+            <div className="bg-white border-2 border-dashed border-amber-300 rounded-3xl p-6 sm:p-10 text-center shadow-xs">
+               <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+                  <Lock size={28} />
+               </div>
+
+               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider mb-3 border border-amber-200">
+                  <Sparkles size={13} className="text-amber-500" />
+                  <span>Coming Soon to Arcade Arena</span>
+               </div>
+
+               <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">
+                  {game.name}
+               </h1>
+
+               <div className="text-xs sm:text-sm text-slate-500 font-medium mb-6">
+                  Crafted by{' '}
+                  <a
+                     href={game.developerLink}
+                     target="_blank"
+                     rel="noreferrer"
+                     className="text-indigo-700 hover:underline font-bold"
+                  >
+                     {game.developer}
+                  </a>
+               </div>
+
+               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 mb-6 text-left space-y-3">
+                  <div>
+                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                        Game Concept
+                     </span>
+                     <p className="text-slate-600 text-sm leading-relaxed">
+                        {game.description}
+                     </p>
+                  </div>
+                  {game.howToPlay && (
+                     <div className="pt-2 border-t border-slate-200/60">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                           How to Play (Preview)
+                        </span>
+                        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                           {game.howToPlay}
+                        </p>
+                     </div>
+                  )}
+               </div>
+
+               <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/70 mb-6">
+                  <div className="text-xs sm:text-sm font-bold text-amber-900 flex items-center justify-center gap-2">
+                     <Clock size={16} className="text-amber-600" />
+                     <span>Official Release Date: <strong className="text-amber-700">{game.releaseDate}</strong></span>
+                  </div>
+                  <p className="text-xs text-amber-700/80 mt-1">
+                     This game is currently locked. It will automatically unlock on its release date for live tournament play.
+                  </p>
+               </div>
+
+               <button
+                  onClick={() => router.push('/games')}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-sm transition-all active:scale-95 cursor-pointer"
+               >
+                  <span>Play This Week's Active Game</span>
+                  <ArrowRight size={16} />
+               </button>
+            </div>
+         </main>
+      );
+   }
 
    const handleStart = (e) => {
       e.preventDefault();
@@ -66,24 +182,43 @@ export default function GameWrapper({ slug, GameComponent }) {
 
    const handleGameOver = (finalScore) => {
       setGameOverScore(finalScore);
-      
+
+      const { count, startTime } = humanInputsRef.current;
+      const elapsedSeconds = startTime > 0 ? (Date.now() - startTime) / 1000 : 0;
+
+      // 🛑 Anti-Cheat Check: Reject if no physical human hardware interactions were detected
+      if (count === 0 || elapsedSeconds < 0.2) {
+         console.warn("Anti-cheat notice: Submission lacked verified physical human interactions.");
+         humanInputsRef.current = { count: 0, startTime: 0, lastTime: 0 };
+         return;
+      }
+
+      // Reset human interaction tracker for next game round
+      humanInputsRef.current = { count: 0, startTime: 0, lastTime: 0 };
+
       if (!player) return;
 
+      const tokenToSubmit = sessionTokenRef.current;
+      sessionTokenRef.current = null; // Single-use: clear immediately to prevent replay
+      refreshSession(); // Fetch fresh session token for next play
+
+      if (!tokenToSubmit) {
+         console.warn("Anti-cheat notice: Missing server security session token.");
+         return;
+      }
+
       setIsSubmitting(true);
-      
-      const secret = process.env.NEXT_PUBLIC_GAME_SALT || '';
-      const hash = btoa(`${finalScore}-${game.slug}-${secret}`);
-      
+
       // Fire and forget: save happens in parallel in the background
       submitScore({
          game_slug: game.slug,
          gaming_name: player.name,
          level: player.level,
          score: finalScore
-      }, hash)
-      .then(() => fetchBoard()) // Refresh the game's leaderboard
-      .catch(err => console.error("Failed to submit score:", err))
-      .finally(() => setIsSubmitting(false));
+      }, tokenToSubmit)
+         .then(() => fetchBoard()) // Refresh the game's leaderboard
+         .catch(err => console.error("Failed to submit score:", err))
+         .finally(() => setIsSubmitting(false));
    };
 
    // Renders the player form used in both start modal and switch modal
@@ -119,8 +254,8 @@ export default function GameWrapper({ slug, GameComponent }) {
          </div>
          <div className="flex gap-3 mt-2">
             {showSwitchModal && (
-               <button 
-                  type="button" 
+               <button
+                  type="button"
                   onClick={() => setShowSwitchModal(false)}
                   className="flex-1 bg-slate-100 text-slate-700 font-bold py-3 px-4 rounded-xl hover:bg-slate-200 transition-all"
                >
@@ -140,25 +275,32 @@ export default function GameWrapper({ slug, GameComponent }) {
             <ArrowLeft size={18} className="mr-2" /> Back to Games Hub
          </button>
 
+         {isDevBypass && (
+            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-900 font-bold">
+               <span>🛠️ Local Dev Testing Mode &bull; Unreleased Game ({game.releaseDate})</span>
+               <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase">?dev=true</span>
+            </div>
+         )}
+
          <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm mb-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 flex items-center flex-wrap gap-3">
                   {game.name}
-                  {game.isActive 
+                  {isGameActive(game)
                      ? <span className="bg-indigo-100 text-indigo-700 text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider">Weekly Live</span>
                      : <span className="bg-slate-100 text-slate-500 text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider">Archived</span>
                   }
                </h1>
-               
+
                <a href={game.developerLink} target="_blank" rel="noreferrer" className="inline-flex items-center text-sm font-semibold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors w-fit">
                   <Code size={16} className="mr-2" /> Built by {game.developer}
                </a>
             </div>
-            
+
             <p className="text-slate-600 text-lg mb-6">{game.description}</p>
-            
+
             <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm text-slate-700 leading-relaxed shadow-inner">
-               <strong className="text-slate-900 block mb-1">How to play:</strong> 
+               <strong className="text-slate-900 block mb-1">How to play:</strong>
                {game.howToPlay}
             </div>
          </div>
@@ -174,7 +316,7 @@ export default function GameWrapper({ slug, GameComponent }) {
             </div>
          ) : (
             <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xl relative">
-               
+
                {/* Player Header */}
                <div className="flex flex-wrap justify-between items-center mb-8 border-b border-slate-100 pb-4 gap-4">
                   <div className="flex items-center gap-3">
@@ -197,8 +339,12 @@ export default function GameWrapper({ slug, GameComponent }) {
                   </button>
                </div>
 
-               {/* Game Rendering area */}
-               <div className="flex justify-center items-center min-h-100">
+               {/* Game Rendering area with DOM Event Capture */}
+               <div
+                  onPointerDownCapture={handleInteraction}
+                  onKeyDownCapture={handleInteraction}
+                  className="flex justify-center items-center min-h-100"
+               >
                   {GameComponent ? (
                      <GameComponent onGameOver={handleGameOver} player={player} />
                   ) : (
@@ -215,13 +361,17 @@ export default function GameWrapper({ slug, GameComponent }) {
                         <div className="text-slate-500 font-medium mb-6">
                            Your Score: <span className="text-4xl block text-indigo-700 font-black mt-2">{gameOverScore}</span>
                         </div>
-                        
+
                         {isSubmitting ? (
                            <div className="text-sm text-slate-500 animate-pulse mb-6">Saving to leaderboard...</div>
                         ) : null}
 
-                        <button 
-                           onClick={() => setGameOverScore(null)} 
+                        <button
+                           onClick={() => {
+                              setGameOverScore(null);
+                              humanInputsRef.current = { count: 0, startTime: 0, lastTime: 0 };
+                              refreshSession();
+                           }}
                            className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl hover:bg-indigo-800 transition"
                         >
                            Play Again
@@ -237,7 +387,7 @@ export default function GameWrapper({ slug, GameComponent }) {
                      {renderPlayerForm()}
                   </div>
                )}
-               
+
             </div>
          )}
 
@@ -247,7 +397,7 @@ export default function GameWrapper({ slug, GameComponent }) {
                <h3 className="text-xl font-bold mb-4 text-slate-800 flex items-center border-b pb-3">
                   <Trophy className="text-yellow-500 mr-2" size={20} /> {game.name} Leaderboard
                </h3>
-               
+
                {loadingBoard ? (
                   <div className="text-center text-slate-400 py-6">Loading scores...</div>
                ) : leaderboard.length === 0 ? (

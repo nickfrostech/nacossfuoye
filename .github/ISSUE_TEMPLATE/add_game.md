@@ -25,7 +25,7 @@ How does the game work?
 - [ ] Read and adhere to guidelines in `src/app/games/README.md`
 - [ ] Self-contained under `src/app/games/<slug>/`
 - [ ] Integrated with `GameWrapper` for anti-cheat hashed score tracking
-- [ ] Registered in `src/app/games/games.js`
+- [ ] Registered in `src/app/games/games.js` with next Monday's `releaseDate` (DD/MM/YYYY) (shows as Coming Soon)
 
 ## 👨‍💻 Contributor Info
 - **Your Name**:
