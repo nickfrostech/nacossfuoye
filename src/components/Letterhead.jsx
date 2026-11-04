@@ -77,11 +77,11 @@ function Letterhead({ date, referenceNumber, content, letterHeadRef, viewMode, s
             <div className={config.dateClass} style={config.dateStyle}>{formatCustomDate(date)}</div>
 
             {viewMode === 'document' ? (
-               <div className={config.contentClass} style={config.contentStyle}>
+               <div className={`${config.contentClass} memo-letterhead-content`} style={config.contentStyle}>
                   <SimpleEditor content={content} setContent={setContent} mode="document" toolbarPortalRef={toolbarPortalRef} />
                </div>
             ) : (
-               <div className={`${config.contentClass} tiptap ProseMirror`} style={config.contentStyle} dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content }} />
+               <div className={`${config.contentClass} memo-letterhead-content tiptap ProseMirror`} style={config.contentStyle} dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? DOMPurify.sanitize(content) : content }} />
             )}
          </div>
       </section>

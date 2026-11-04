@@ -32,15 +32,21 @@
 	caret-color: var(--tt-cursor-color);
 
 	// Paragraph spacing
-	p:not(:first-child):not(td p):not(th p) {
-		margin-top: 20px;
+	p:not(:first-child):not(td p):not(th p):not(li p) {
+		margin-top: 0.25rem;
 	}
 
 	p:not(td p):not(th p) {
 		font-size: inherit;
-		line-height: 1.6;
+		line-height: 1.35;
 		font-weight: inherit;
 		color: inherit;
+		min-height: 1.35em;
+	}
+
+	p:empty,
+	p > .ProseMirror-trailingBreak:only-child {
+		min-height: 1.35em;
 	}
 
 	// Selection styles
