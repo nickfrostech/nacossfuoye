@@ -6,7 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import MemoCard from '@/components/MemoCard';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const CATEGORY_NAMES = {
    executive: "Executive Memos",
@@ -86,11 +86,7 @@ export default function TypeDashboard() {
          <PageHeader 
             title={title}
             onSortChange={setOrder}
-         >
-            <Link href="/admin/dashboard" aria-label="Go back to Hub" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-slate-500 hover:text-primary hover:border-primary/30 transition-all duration-300 ease-out active:scale-[0.97]">
-               <ArrowLeft size={22} />
-            </Link>
-         </PageHeader>
+         />
 
          {fetchError && (
             <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 font-medium">

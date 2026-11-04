@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { House, FileDown } from 'lucide-react';
-import Link from 'next/link';
+import { FileDown } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import Notification from '@/components/Notification';
 import { toPng } from 'html-to-image';
@@ -10,7 +9,7 @@ import QuotesFlyer from '@/components/QuotesFlyer';
 import useScale from '@/hooks/useScale';
 import { createClient } from '@/utils/supabase/client';
 
-export default function QuotesForm({ templateType = 'dyk', backLink = '/graphics', hideHeader = false }) {
+export default function QuotesForm({ templateType = 'dyk', hideHeader = false }) {
    const [message, setMessage] = useState('');
    const [isGenerating, setIsGenerating] = useState(false);
    const [notification, setNotification] = useState(null);
@@ -100,7 +99,7 @@ export default function QuotesForm({ templateType = 'dyk', backLink = '/graphics
    const title = templateType === 'dyk' ? 'Do You Know' : 'Invest Friday';
 
    return (
-      <div className="w-full max-w-7xl mx-auto space-y-8 pb-20">
+      <div className="w-full max-w-7xl mx-auto space-y-8 pb-20 relative pt-4 sm:pt-6">
          {notification && (
             <Notification
                message={notification.message}
@@ -135,9 +134,6 @@ export default function QuotesForm({ templateType = 'dyk', backLink = '/graphics
          ) : (
             <PageHeader title={`${title} Template`}>
                <div className="flex flex-wrap items-center gap-3">
-                  <Link href={backLink} aria-label="Go back" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-primary hover:border-primary/30 transition-all duration-300">
-                     <House size={22} />
-                  </Link>
                   <button
                      type="button"
                      onClick={downloadFlyer}
@@ -165,7 +161,7 @@ export default function QuotesForm({ templateType = 'dyk', backLink = '/graphics
          <div className="flex flex-col lg:flex-row gap-8 items-start">
             {/* Form Controls */}
             <div className="w-full lg:w-1/3 space-y-6">
-               <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-200/60">
+               <div className="bg-white rounded-3xl p-6 shadow-xl shadow-slate-200/40 border border-slate-200/60 lg:sticky lg:top-32">
                   <div className="mb-6 pb-4 border-b border-slate-100">
                      <h2 className="text-lg font-bold text-slate-800">Content Editor</h2>
                      <p className="text-sm text-slate-500 mt-1">Update the message for your design</p>

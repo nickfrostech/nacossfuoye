@@ -1,6 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
-import LogoutBtn from './LogoutBtn';
 
 export default async function ProtectedLayout({ children }) {
    const supabase = await createClient();
@@ -11,8 +10,7 @@ export default async function ProtectedLayout({ children }) {
    }
 
    return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-         <LogoutBtn />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 md:pt-20 pb-16">
          {children}
       </main>
    );

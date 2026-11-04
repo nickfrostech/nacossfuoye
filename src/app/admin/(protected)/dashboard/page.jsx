@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
-import { FileText, ArrowRight, Home, Quote, Image as ImageIcon, Wallet, Shield } from 'lucide-react';
+import { FileText, ArrowRight, Quote, Image as ImageIcon, Wallet, Shield } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 const CATEGORIES = [
@@ -105,15 +105,11 @@ export default function AdminDashBoardHub() {
 
    return (
       <div className="animate-in fade-in duration-500">
-         <PageHeader title="Admin Dashboard">
-            <Link href="/" aria-label="Go to home" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-slate-500 hover:text-primary hover:border-primary/30 transition-all duration-300 ease-out active:scale-[0.97]">
-               <Home size={22} />
-            </Link>
-         </PageHeader>
+         <PageHeader title="Admin Dashboard" />
 
          {/* Official Memos Section */}
          {visibleCategories.length > 0 && (
-            <>
+            <section id="memos" className="scroll-mt-28">
                <div className="mt-8 mb-4">
                   <h2 className="text-xl font-bold text-slate-800">Official Memos</h2>
                   <p className="text-sm text-slate-500 mt-1">Manage and publish official NACOSS memorandums.</p>
@@ -156,12 +152,12 @@ export default function AdminDashBoardHub() {
                      </Link>
                   ))}
                </div>
-            </>
+            </section>
          )}
 
          {/* Financial Section */}
          {(canViewLedger || canViewTreasurer) && (
-            <>
+            <section id="finances" className="scroll-mt-28">
                <div className="mt-12 mb-4">
                   <h2 className="text-xl font-bold text-slate-800">Ledgers</h2>
                   <p className="text-sm text-slate-500 mt-1">Manage finances and treasures.</p>
@@ -236,12 +232,12 @@ export default function AdminDashBoardHub() {
                      </Link>
                   )}
                </div>
-            </>
+            </section>
          )}
 
          {/* Templates Section */}
          {canViewTemplates && (
-            <>
+            <section id="templates" className="scroll-mt-28">
                <div className="mt-12 mb-4">
                   <h2 className="text-xl font-bold text-slate-800">Design Templates</h2>
                   <p className="text-sm text-slate-500 mt-1">Generate flyers, graphics, and other visual assets.</p>
@@ -320,7 +316,7 @@ export default function AdminDashBoardHub() {
                      </Link>
                   ))}
                </div>    
-            </>
+            </section>
          )}
       </div>
    );

@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { 
    Github, 
    ChevronDown, 
@@ -22,10 +23,51 @@ import {
    MessageSquare,
    Send,
    CheckCircle2,
-   GraduationCap
+   GraduationCap,
+   LogOut,
+   Wallet
 } from 'lucide-react';
 
 const REPO_URL = 'https://github.com/nickfrostech/nacossfuoye';
+
+const getAdminSectionNavItems = (userRole) => {
+   const items = [
+      {
+         id: 'memos',
+         title: 'Memos',
+         icon: FileText,
+         color: 'text-emerald-600 bg-emerald-50 border-emerald-200/60',
+      },
+   ];
+
+   if (!userRole) {
+      return items;
+   }
+
+   const canViewLedger = ['admin', 'president', 'fin_sec'].includes(userRole);
+   const canViewTreasurer = ['admin', 'president', 'treasurer', 'gen_sec', 'ags', 'pro', 'vp'].includes(userRole);
+   const canViewTemplates = !['src', 'elecom'].includes(userRole);
+
+   if (canViewLedger || canViewTreasurer) {
+      items.push({
+         id: 'finances',
+         title: 'Finances',
+         icon: Wallet,
+         color: 'text-blue-600 bg-blue-50 border-blue-200/60',
+      });
+   }
+
+   if (canViewTemplates) {
+      items.push({
+         id: 'templates',
+         title: 'Templates',
+         icon: Palette,
+         color: 'text-purple-600 bg-purple-50 border-purple-200/60',
+      });
+   }
+
+   return items;
+};
 
 const DO_SOMETHING_ITEMS = [
    {
@@ -136,11 +178,72 @@ const COMMUNITY_CHANNELS = [
 
 export default function Navbar() {
    const pathname = usePathname();
+   const router = useRouter();
    const [isMenuOpen, setIsMenuOpen] = useState(false);
    const [isDoSomethingOpen, setIsDoSomethingOpen] = useState(false);
    const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+   const [userRole, setUserRole] = useState(null);
 
    const navContainerRef = useRef(null);
+
+   const isAdminRoute = pathname?.startsWith('/admin');
+   const isProtectedAdmin = isAdminRoute && pathname !== '/admin';
+
+   // Fetch executive role when on protected admin route
+   useEffect(() => {
+      if (!isProtectedAdmin) {
+         setUserRole(null);
+         return;
+      }
+      let isMounted = true;
+      const fetchRole = async () => {
+         try {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && isMounted) {
+               const { data: roleData } = await supabase
+                  .from('user_roles')
+                  .select('role')
+                  .eq('user_email', user.email)
+                  .single();
+               if (isMounted) {
+                  setUserRole(roleData?.role || null);
+               }
+            }
+         } catch (err) {
+            console.error('Error fetching role in Navbar:', err);
+         }
+      };
+      fetchRole();
+      return () => {
+         isMounted = false;
+      };
+   }, [isProtectedAdmin]);
+
+   const adminSectionItems = getAdminSectionNavItems(userRole);
+
+   const scrollToSection = (e, sectionId) => {
+      if (pathname === '/admin/dashboard') {
+         e.preventDefault();
+         const target = document.getElementById(sectionId);
+         if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+            window.history.pushState(null, '', `/admin/dashboard#${sectionId}`);
+         }
+      }
+   };
+
+   const handleLogout = async () => {
+      try {
+         const supabase = createClient();
+         await supabase.auth.signOut();
+         router.push('/admin');
+         router.refresh();
+      } catch (err) {
+         console.error('Logout error:', err);
+         router.push('/admin');
+      }
+   };
 
    // Close popups on route change
    useEffect(() => {
@@ -197,9 +300,9 @@ export default function Navbar() {
             >
                {/* Left: Department Logo and NACOSS Name */}
                <Link 
-                  href="/" 
+                  href={isAdminRoute ? (isProtectedAdmin ? '/admin/dashboard' : '/admin') : '/'} 
                   className="flex items-center gap-2.5 pl-1.5 pr-2 rounded-full hover:bg-slate-100/70 transition-colors group select-none"
-                  aria-label="NACOSS Home"
+                  aria-label={isAdminRoute ? 'NACOSS Admin Home' : 'NACOSS Home'}
                >
                   <div className="relative w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform duration-300">
                      <Image 
@@ -215,133 +318,183 @@ export default function Navbar() {
                      <span className="font-extrabold text-sm sm:text-base tracking-wider text-slate-900 font-nasalization uppercase">
                         NACOSS
                      </span>
-                     <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-sans">
-                        FUOYE
+                     <span className={`text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded-full font-sans border ${
+                        isAdminRoute 
+                           ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                           : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                     }`}>
+                        {isAdminRoute ? 'ADMIN' : 'FUOYE'}
                      </span>
                   </div>
                </Link>
 
                {/* Center: Desktop Navigation Items */}
-               <div className="hidden md:flex items-center gap-1">
-                  {/* "Do Something" Interactive Dropdown */}
-                  <div className="relative">
-                     <button
-                        type="button"
-                        onClick={() => setIsDoSomethingOpen((prev) => !prev)}
-                        aria-expanded={isDoSomethingOpen}
-                        aria-haspopup="true"
-                        className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-                           isDoSomethingOpen 
-                              ? 'bg-emerald-50 text-emerald-700 shadow-xs' 
-                              : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
-                        }`}
-                     >
-                        <Sparkles size={15} className="text-emerald-600" />
-                        <span>Do Something</span>
-                        <ChevronDown 
-                           size={14} 
-                           className={`transition-transform duration-200 opacity-60 ${isDoSomethingOpen ? 'rotate-180 text-emerald-700' : ''}`} 
-                        />
-                     </button>
+               {isAdminRoute ? (
+                  <div className="hidden md:flex items-center gap-1.5">
+                     {adminSectionItems.map((item) => {
+                        const IconComp = item.icon;
+                        return (
+                           <Link
+                              key={item.id}
+                              href={`/admin/dashboard#${item.id}`}
+                              onClick={(e) => scrollToSection(e, item.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 transition-all duration-200"
+                           >
+                              <IconComp size={15} className={item.color.split(' ')[0]} />
+                              <span>{item.title}</span>
+                           </Link>
+                        );
+                     })}
 
-                     {/* Dropdown Menu with Two-Way Opening and Closing Animation */}
-                     <div 
-                        role="menu"
-                        aria-hidden={!isDoSomethingOpen}
-                        className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-105 max-w-[92vw] p-2 bg-white/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 shadow-2xl z-50 origin-top transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                           isDoSomethingOpen
-                              ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto visible'
-                              : 'opacity-0 scale-95 -translate-y-2 pointer-events-none invisible'
-                        }`}
+                     {/* Return to Public Website */}
+                     <Link
+                        href="/"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 transition-colors"
+                        title="Go to Public NACOSS Site"
                      >
-                        <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto p-1">
-                           {DO_SOMETHING_ITEMS.map((item) => {
-                              const IconComp = item.icon;
-                              return (
-                                 <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={() => setIsDoSomethingOpen(false)}
-                                    role="menuitem"
-                                    className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
-                                 >
-                                    <div className={`p-2.5 rounded-xl shrink-0 border ${item.color} group-hover:scale-105 transition-transform`}>
-                                       <IconComp size={18} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                       <span className="text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition-colors block truncate">
-                                          {item.title}
-                                       </span>
-                                       <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 font-medium">
-                                          {item.desc}
-                                       </p>
-                                    </div>
-                                 </Link>
-                              );
-                           })}
+                        <span>Student Portal</span>
+                        <ExternalLink size={12} />
+                     </Link>
+                  </div>
+               ) : (
+                  <div className="hidden md:flex items-center gap-1">
+                     {/* "Do Something" Interactive Dropdown */}
+                     <div className="relative">
+                        <button
+                           type="button"
+                           onClick={() => setIsDoSomethingOpen((prev) => !prev)}
+                           aria-expanded={isDoSomethingOpen}
+                           aria-haspopup="true"
+                           className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                              isDoSomethingOpen 
+                                 ? 'bg-emerald-50 text-emerald-700 shadow-xs' 
+                                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
+                           }`}
+                        >
+                           <Sparkles size={15} className="text-emerald-600" />
+                           <span>Do Something</span>
+                           <ChevronDown 
+                              size={14} 
+                              className={`transition-transform duration-200 opacity-60 ${isDoSomethingOpen ? 'rotate-180 text-emerald-700' : ''}`} 
+                           />
+                        </button>
+
+                        {/* Dropdown Menu with Two-Way Opening and Closing Animation */}
+                        <div 
+                           role="menu"
+                           aria-hidden={!isDoSomethingOpen}
+                           className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 w-105 max-w-[92vw] p-2 bg-white/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 shadow-2xl z-50 origin-top transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                              isDoSomethingOpen
+                                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto visible'
+                                 : 'opacity-0 scale-95 -translate-y-2 pointer-events-none invisible'
+                           }`}
+                        >
+                           <div className="flex flex-col gap-1 max-h-[80vh] overflow-y-auto p-1">
+                              {DO_SOMETHING_ITEMS.map((item) => {
+                                 const IconComp = item.icon;
+                                 return (
+                                    <Link
+                                       key={item.href}
+                                       href={item.href}
+                                       onClick={() => setIsDoSomethingOpen(false)}
+                                       role="menuitem"
+                                       className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
+                                    >
+                                       <div className={`p-2.5 rounded-xl shrink-0 border ${item.color} group-hover:scale-105 transition-transform`}>
+                                          <IconComp size={18} />
+                                       </div>
+                                       <div className="flex-1 min-w-0">
+                                          <span className="text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition-colors block truncate">
+                                             {item.title}
+                                          </span>
+                                          <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 font-medium">
+                                             {item.desc}
+                                          </p>
+                                       </div>
+                                    </Link>
+                                 );
+                              })}
+                           </div>
                         </div>
                      </div>
+
+                     {/* Direct Nav Links */}
+                     <Link 
+                        href="/memos" 
+                        className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                           pathname === '/memos' 
+                              ? 'text-emerald-700 bg-emerald-50/80 font-semibold' 
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                        }`}
+                     >
+                        Memos
+                     </Link>
+
+                     <Link 
+                        href="/academics" 
+                        className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                           pathname === '/academics' 
+                              ? 'text-emerald-700 bg-emerald-50/80 font-semibold' 
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                        }`}
+                     >
+                        Academics
+                     </Link>
+
+                     <Link 
+                        href="/games" 
+                        className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                           pathname?.startsWith('/games') 
+                              ? 'text-emerald-700 bg-emerald-50/80 font-semibold' 
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                        }`}
+                     >
+                        Games
+                     </Link>
                   </div>
+               )}
 
-                  {/* Direct Nav Links */}
-                  <Link 
-                     href="/memos" 
-                     className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
-                        pathname === '/memos' 
-                           ? 'text-emerald-700 bg-emerald-50/80 font-semibold' 
-                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                     }`}
-                  >
-                     Memos
-                  </Link>
-
-                  <Link 
-                     href="/academics" 
-                     className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
-                        pathname === '/academics' 
-                           ? 'text-emerald-700 bg-emerald-50/80 font-semibold' 
-                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                     }`}
-                  >
-                     Academics
-                  </Link>
-
-                  <Link 
-                     href="/games" 
-                     className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
-                        pathname?.startsWith('/games') 
-                           ? 'text-emerald-700 bg-emerald-50/80 font-semibold' 
-                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                     }`}
-                  >
-                     Games
-                  </Link>
-               </div>
-
-               {/* Right Side: Desktop "Join" + GitHub Repository Link, Mobile Hamburger */}
+               {/* Right Side: Desktop Actions, Mobile Hamburger */}
                <div className="flex items-center gap-2">
-                  {/* Desktop Only: "Join" Button */}
-                  <button
-                     type="button"
-                     onClick={() => setIsJoinModalOpen(true)}
-                     className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-xs hover:shadow-md active:scale-95"
-                     aria-label="Join NACOSS Community"
-                  >
-                     <UserPlus size={14} />
-                     <span>Join</span>
-                  </button>
+                  {isAdminRoute ? (
+                     isProtectedAdmin && (
+                        <button
+                           type="button"
+                           onClick={handleLogout}
+                           className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200/80 transition-all duration-200 active:scale-95 shadow-2xs"
+                           aria-label="Logout of Admin"
+                           title="Sign out of Admin Session"
+                        >
+                           <LogOut size={13} />
+                           <span>Logout</span>
+                        </button>
+                     )
+                  ) : (
+                     <>
+                        {/* Desktop Only: "Join" Button */}
+                        <button
+                           type="button"
+                           onClick={() => setIsJoinModalOpen(true)}
+                           className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-xs hover:shadow-md active:scale-95"
+                           aria-label="Join NACOSS Community"
+                        >
+                           <UserPlus size={14} />
+                           <span>Join</span>
+                        </button>
 
-                  {/* Desktop Only: GitHub Repository Icon */}
-                  <a
-                     href={REPO_URL}
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     aria-label="NACOSS Portal GitHub Repository"
-                     title="View GitHub Repository"
-                     className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-all duration-200 active:scale-95 shadow-2xs"
-                  >
-                     <Github size={17} className="transition-transform hover:rotate-6" />
-                  </a>
+                        {/* Desktop Only: GitHub Repository Icon */}
+                        <a
+                           href={REPO_URL}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="NACOSS Portal GitHub Repository"
+                           title="View GitHub Repository"
+                           className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-full bg-slate-100/90 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-all duration-200 active:scale-95 shadow-2xs"
+                        >
+                           <Github size={17} className="transition-transform hover:rotate-6" />
+                        </a>
+                     </>
+                  )}
 
                   {/* Mobile Menu Hamburger Toggle */}
                   <button
@@ -365,57 +518,119 @@ export default function Navbar() {
                      : 'opacity-0 scale-95 -translate-y-2 pointer-events-none invisible'
                }`}
             >
-               <div>
-                  <div className="grid grid-cols-1 gap-1">
-                     {DO_SOMETHING_ITEMS.map((item) => {
-                        const IconComp = item.icon;
-                        return (
-                           <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={() => setIsMenuOpen(false)}
-                              className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
-                           >
-                              <div className={`p-2 rounded-xl shrink-0 border ${item.color}`}>
-                                 <IconComp size={16} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                 <span className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 transition-colors block truncate">
-                                    {item.title}
-                                 </span>
-                                 <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 font-medium">
-                                    {item.desc}
-                                 </p>
-                              </div>
-                           </Link>
-                        );
-                     })}
-                  </div>
-               </div>
+               {isAdminRoute ? (
+                  <div>
+                     <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                           Admin Navigation
+                        </span>
+                        <Link
+                           href="/"
+                           onClick={() => setIsMenuOpen(false)}
+                           className="text-xs font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1"
+                        >
+                           <span>Student Portal</span>
+                           <ExternalLink size={11} />
+                        </Link>
+                     </div>
+                     <div className="grid grid-cols-1 gap-1">
+                        {adminSectionItems.map((item) => {
+                           const IconComp = item.icon;
+                           return (
+                              <Link
+                                 key={item.id}
+                                 href={`/admin/dashboard#${item.id}`}
+                                 onClick={(e) => {
+                                    setIsMenuOpen(false);
+                                    scrollToSection(e, item.id);
+                                 }}
+                                 className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
+                              >
+                                 <div className={`p-2 rounded-xl shrink-0 border ${item.color}`}>
+                                    <IconComp size={16} />
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                    <span className="text-sm font-semibold block truncate text-slate-800 group-hover:text-emerald-700 transition-colors">
+                                       {item.title}
+                                    </span>
+                                 </div>
+                              </Link>
+                           );
+                        })}
+                     </div>
 
-               {/* Mobile Bottom Actions: Join Community & GitHub */}
-               <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <button
-                     type="button"
-                     onClick={() => {
-                        setIsMenuOpen(false);
-                        setIsJoinModalOpen(true);
-                     }}
-                     className="flex-1 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-xs transition-colors"
-                  >
-                     <UserPlus size={16} />
-                     <span>Join Community</span>
-                  </button>
-                  <a
-                     href={REPO_URL}
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors"
-                     aria-label="GitHub Repository"
-                  >
-                     <Github size={18} />
-                  </a>
-               </div>
+                     {/* Mobile Admin Logout */}
+                     {isProtectedAdmin && (
+                        <div className="pt-3 mt-3 border-t border-slate-100">
+                           <button
+                              type="button"
+                              onClick={() => {
+                                 setIsMenuOpen(false);
+                                 handleLogout();
+                              }}
+                              className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-xs transition-colors"
+                           >
+                              <LogOut size={16} />
+                              <span>Logout of Admin</span>
+                           </button>
+                        </div>
+                     )}
+                  </div>
+               ) : (
+                  <>
+                     <div>
+                        <div className="grid grid-cols-1 gap-1">
+                           {DO_SOMETHING_ITEMS.map((item) => {
+                              const IconComp = item.icon;
+                              return (
+                                 <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-start gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
+                                 >
+                                    <div className={`p-2 rounded-xl shrink-0 border ${item.color}`}>
+                                       <IconComp size={16} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                       <span className="text-sm font-semibold text-slate-800 group-hover:text-emerald-700 transition-colors block truncate">
+                                          {item.title}
+                                       </span>
+                                       <p className="text-xs text-slate-500 line-clamp-1 mt-0.5 font-medium">
+                                          {item.desc}
+                                       </p>
+                                    </div>
+                                 </Link>
+                              );
+                           })}
+                        </div>
+                     </div>
+
+                     {/* Mobile Bottom Actions: Join Community & GitHub */}
+                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <button
+                           type="button"
+                           onClick={() => {
+                              setIsMenuOpen(false);
+                              setIsJoinModalOpen(true);
+                           }}
+                           className="flex-1 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-xs transition-colors"
+                        >
+                           <UserPlus size={16} />
+                           <span>Join Community</span>
+                        </button>
+                        <a
+                           href={REPO_URL}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 flex items-center justify-center transition-colors"
+                           aria-label="GitHub Repository"
+                        >
+                           <Github size={18} />
+                        </a>
+                     </div>
+                  </>
+               )}
             </div>
          </header>
 

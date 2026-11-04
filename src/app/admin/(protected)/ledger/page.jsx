@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import PageHeader from '@/components/PageHeader';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { Wallet } from '@esvigy/react';
 import Notification from '@/components/Notification';
 
@@ -194,18 +193,13 @@ export default function LedgerPage() {
          )}
 
          <PageHeader title="Financial Ledger">
-            <div className="flex gap-3">
-               <Link href="/admin/dashboard" aria-label="Go back to Hub" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-slate-500 hover:text-primary hover:border-primary/30 transition-all duration-300">
-                  <ArrowLeft size={22} />
-               </Link>
-               <button
-                  onClick={() => setShowForm(!showForm)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-all shadow-sm"
-               >
-                  <Plus size={20} />
-                  <span>New Transaction</span>
-               </button>
-            </div>
+            <button
+               onClick={() => setShowForm(!showForm)}
+               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white font-medium hover:bg-primary/90 transition-all shadow-sm"
+            >
+               <Plus size={20} />
+               <span>New Transaction</span>
+            </button>
          </PageHeader>
 
          {/* Overview Cards */}

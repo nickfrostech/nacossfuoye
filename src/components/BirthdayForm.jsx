@@ -2,8 +2,7 @@
 
 import { useState, useRef } from 'react';
 import useScale from '@/hooks/useScale';
-import { House, ImagePlus, FileDown } from 'lucide-react';
-import Link from 'next/link';
+import { ImagePlus, FileDown } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import Notification from '@/components/Notification';
 import { toPng } from 'html-to-image';
@@ -11,7 +10,7 @@ import ImageCropperModal from '@/components/ImageCropperModal';
 import BirthdayFlyer from '@/components/BirthdayFlyer';
 import { BIRTHDAY_CONFIGS } from '@/lib/birthday-configs';
 
-export default function BirthdayForm({ templateType = 'executive', backLink = '/admin/dashboard', hideHeader = false }) {
+export default function BirthdayForm({ templateType = 'executive', hideHeader = false }) {
    const [firstname, setFirstname] = useState('The');
    const [lastname, setLastname] = useState('Binaries');
    const [post, setPost] = useState('200 Level');
@@ -112,7 +111,7 @@ export default function BirthdayForm({ templateType = 'executive', backLink = '/
    };
 
    return (
-      <div>
+      <div className="relative pt-4 sm:pt-6">
          {notification && <Notification message={notification.message} type={notification.type} />}
 
          {rawImage && (
@@ -150,9 +149,6 @@ export default function BirthdayForm({ templateType = 'executive', backLink = '/
          ) : (
             <PageHeader title={`${templateType.toUpperCase()} Birthday Template`}>
                <div className="flex flex-wrap items-center gap-3">
-                  <Link href={backLink} aria-label="Go back" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-primary hover:border-primary/30 transition-all duration-300">
-                     <House size={22} />
-                  </Link>
                   <button
                      onClick={downloadFlyer}
                      disabled={isGenerating}
@@ -175,7 +171,7 @@ export default function BirthdayForm({ templateType = 'executive', backLink = '/
          )}
 
          <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 items-start mt-4">
-            <aside className="p-6 rounded-2xl bg-white shadow-xl lg:sticky lg:top-8 border border-slate-100">
+            <aside className="p-6 rounded-2xl bg-white shadow-xl lg:sticky lg:top-32 border border-slate-100">
                <h3 className="text-lg font-bold text-slate-800 mb-6">Flyer Details</h3>
                <div className="space-y-5">
                   <div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Wallet } from '@esvigy/react';
 
 export default function TreasurerPage() {
@@ -62,11 +62,7 @@ export default function TreasurerPage() {
 
    return (
       <div className="animate-in fade-in duration-500">
-         <PageHeader title="Treasurer Records">
-            <Link href="/admin/dashboard" aria-label="Go back to Hub" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-slate-500 hover:text-primary hover:border-primary/30 transition-all duration-300">
-               <ArrowLeft size={22} />
-            </Link>
-         </PageHeader>
+         <PageHeader title="Treasurer Records" />
 
          <div className="mt-8">
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden relative">
