@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Letterhead from '@/components/Letterhead';
@@ -17,6 +17,12 @@ export default function ViewMemoClient({ memo, previousRef, nextRef }) {
 
    // Call the scaling hook
    useScale({ letterHeadRef, previewRef });
+
+   // Next/previous navigation can keep the old scroll offset, leaving the page
+   // title hidden under the fixed navbar. Always start a memo at the top.
+   useEffect(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+   }, [memo.reference]);
 
    const handleNext = () => {
       if (nextRef) router.push(`/${encodeURIComponent(nextRef)}`);
