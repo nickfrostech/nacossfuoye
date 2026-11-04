@@ -5,8 +5,6 @@ import Letterhead from '@/components/Letterhead';
 import { createClient } from '@/utils/supabase/client';
 import DownloadBtn from '@/components/DownloadBtn';
 import useScale from '@/hooks/useScale';
-import { House } from 'lucide-react';
-import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { AddNewMemo, UpdateMemo } from '@/components/PublishBtn';
 
@@ -20,11 +18,40 @@ const PREFIX_MAP = {
 };
 
 export default function MemoForm({ isNew = true, initialData = {}, memoType = 'executive' }) {
-   const [date, setDate] = useState(initialData.date || '');
+   const [date, setDate] = useState(() => {
+      if (initialData.date) return initialData.date;
+      if (isNew && typeof window !== 'undefined') {
+         try {
+            const savedDraft = localStorage.getItem(`nacoss_memo_draft_${memoType}`);
+            if (savedDraft) {
+               const parsed = JSON.parse(savedDraft);
+               if (parsed.date) return parsed.date;
+            }
+         } catch (e) {
+            console.warn('Could not read memo draft date:', e);
+         }
+      }
+      return '';
+   });
+
    const [referenceNumber, setReferenceNumber] = useState(initialData.reference || '');
    const supabase = createClient();
+
    const [content, setContent] = useState(() => {
       let initContent = initialData.content || '';
+      if (!initContent && isNew && typeof window !== 'undefined') {
+         try {
+            const savedDraft = localStorage.getItem(`nacoss_memo_draft_${memoType}`);
+            if (savedDraft) {
+               const parsed = JSON.parse(savedDraft);
+               if (parsed.content) {
+                  initContent = parsed.content;
+               }
+            }
+         } catch (e) {
+            console.warn('Could not read memo draft content:', e);
+         }
+      }
       if (initialData.head && initContent && !initContent.includes(initialData.head)) {
          initContent = `<h1>${initialData.head}</h1>${initContent}`;
       } else if (initialData.head && !initContent) {
@@ -96,6 +123,26 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       };
    }, [isNew, memoType, initialData.reference, supabase]);
 
+   // Auto-save draft to local storage so user content is never lost if session expires or page refreshes
+   useEffect(() => {
+      if (!isNew || typeof window === 'undefined') return;
+      if (!content && !date) return;
+
+      const timer = setTimeout(() => {
+         try {
+            localStorage.setItem(`nacoss_memo_draft_${memoType}`, JSON.stringify({
+               date,
+               content,
+               savedAt: Date.now()
+            }));
+         } catch (e) {
+            console.warn('Could not auto-save draft:', e);
+         }
+      }, 500);
+
+      return () => clearTimeout(timer);
+   }, [isNew, memoType, date, content]);
+
    useScale({ letterHeadRef, previewRef });
 
    const handleBeforeDownload = async () => {
@@ -106,14 +153,11 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
    };
 
    return (
-      <div>
+      <div className="relative pt-4 sm:pt-6">
          <PageHeader
             title={isNew ? 'Create New Memo' : 'Edit Memo'}
          >
-            <div className="flex flex-wrap items-center gap-3">
-               <Link href={`/admin/dashboard/${memoType}`} aria-label="Go back to dashboard" className="inline-flex items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-md border border-slate-200/60 text-primary hover:border-primary/30 transition-all duration-300">
-                  <House size={22} />
-               </Link>
+            <div className="relative z-10 flex flex-wrap items-center gap-2 sm:gap-3">
                <DownloadBtn elementRef={letterHeadRef} referenceNumber={referenceNumber || 'draft'} onBeforeDownload={handleBeforeDownload} />
                {isNew ? (
                   <AddNewMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={derivedHead} content={content} type={memoType} />
@@ -125,7 +169,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
 
          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 items-start">
             {/* Form Section */}
-            <aside className="p-5 rounded-2xl lg:sticky lg:top-8 min-w-0 shadow-xl">
+            <aside className="p-5 rounded-2xl lg:sticky lg:top-32 min-w-0 shadow-xl">
                <div className="space-y-4">
                   <div className="flex justify-around bg-slate-100/80 p-1 rounded-xl w-full">
                      <button onClick={() => setViewMode('split')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 ${viewMode === 'split' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:text-primary'}`}>Split View</button>
@@ -170,7 +214,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
 
             {/* Preview Section */}
             <main className="shadow-xl rounded-2xl w-full relative flex flex-col min-w-0">
-               <div ref={toolbarPortalRef} className="w-full z-50 sticky top-0 bg-white" />
+               <div ref={toolbarPortalRef} className="w-full z-30 sticky top-32 bg-white rounded-t-2xl shadow-xs" />
                <div ref={previewRef} className="w-full relative aspect-794/1123 overflow-hidden bg-gray-100">
                   <Letterhead
                      date={date}

@@ -7,6 +7,69 @@ import Notification from '@/components/Notification';
 const TYPE_PREFIX_MAP = { executive: 'NACOSS', elecom: 'CSCEC', src: 'CSCSRC', president: 'CSCPR' };
 const getPrefix = (t) => TYPE_PREFIX_MAP[t] || 'NACOSS';
 
+// Timeout wrapper that guarantees promises will never hang indefinitely
+const withTimeout = (promise, ms = 12000, errorMsg = 'Operation timed out. Please check your connection and try again.') => {
+   let timer;
+   const timeoutPromise = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(errorMsg)), ms);
+   });
+   return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timer);
+   });
+};
+
+// Resilient session & user resolver that handles expired tokens and tab sleep
+const getActiveUser = async (supabase) => {
+   // 1. Fast path: check current local session
+   try {
+      const { data: sessionData, error: sessionErr } = await withTimeout(
+         supabase.auth.getSession(),
+         6000,
+         'Local session check timed out'
+      );
+
+      if (!sessionErr && sessionData?.session?.user) {
+         const expiresAt = sessionData.session.expires_at;
+         const nowInSeconds = Math.floor(Date.now() / 1000);
+         // If token has more than 60 seconds of validity remaining, use it immediately
+         if (expiresAt && expiresAt - nowInSeconds > 60) {
+            return { user: sessionData.session.user, error: null };
+         }
+      }
+   } catch (err) {
+      console.warn('Initial session check error:', err);
+   }
+
+   // 2. Token is close to expiring, expired, or missing in memory: proactively refresh
+   try {
+      const { data: refreshData, error: refreshErr } = await withTimeout(
+         supabase.auth.refreshSession(),
+         8000,
+         'Session refresh timed out'
+      );
+      if (!refreshErr && refreshData?.session?.user) {
+         return { user: refreshData.session.user, error: null };
+      }
+   } catch (err) {
+      console.warn('Token refresh attempt failed:', err);
+   }
+
+   // 3. Fallback: query getUser() with a strict timeout
+   try {
+      const { data: userData, error: userErr } = await withTimeout(
+         supabase.auth.getUser(),
+         8000,
+         'User verification timed out'
+      );
+      if (!userErr && userData?.user) {
+         return { user: userData.user, error: null };
+      }
+      return { user: null, error: userErr || new Error('No active user session') };
+   } catch (err) {
+      return { user: null, error: err };
+   }
+};
+
 export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, type = 'executive' }, ref) => {
    const [isAdding, setIsAdding] = useState(false);
    const [notification, setNotification] = useState(null);
@@ -14,7 +77,7 @@ export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, ty
 
    const showNotification = (message, type) => {
       setNotification({ message, type });
-      setTimeout(() => setNotification(null), 3000);
+      setTimeout(() => setNotification(null), 3500);
    };
 
    useImperativeHandle(ref, () => ({
@@ -44,31 +107,53 @@ export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, ty
             return false;
          }
 
-         const { data: { user } } = await supabase.auth.getUser();
+         const { user, error: userError } = await getActiveUser(supabase);
+         if (!user) {
+            console.error('User auth verification failed:', userError);
+            showNotification('Your session expired. Please open a new tab to log in, then click Publish again.', 'error');
+            return false;
+         }
 
-         const { error } = await supabase.from('memo').insert({
-            reference: referenceNumber,
-            date: date,
-            head: head,
-            content: content,
-            type: type,
-            created_by: user?.email
-         });
+         const { error } = await withTimeout(
+            supabase.from('memo').insert({
+               reference: referenceNumber,
+               date: date,
+               head: head,
+               content: content,
+               type: type,
+               created_by: user?.email
+            }),
+            12000,
+            'Saving memo timed out. Please check your internet connection.'
+         );
 
          if (error) {
             if (error.code === '23505') {
-               showNotification('Reference already exists.', 'error');
-               return false; // Prevent download on unique constraint error
+               showNotification('Reference number already exists.', 'error');
+               return false;
+            } else if (error.code === '42501') {
+               showNotification('Permission denied or session expired. Please re-login.', 'error');
+               return false;
             } else {
-               showNotification('Server error, please try again', 'error');
-               return true; // Optional: allow download on random server errors if you want, or false. User said "not all error should disable download, but empty fields, ref not unique". Returning false is safer, but let's return false for all errors to be safe.
+               showNotification(error.message || 'Server error, please try again', 'error');
+               return false;
+            }
+         }
+
+         // Clean up auto-saved draft upon successful publish
+         if (typeof window !== 'undefined') {
+            try {
+               localStorage.removeItem(`nacoss_memo_draft_${type}`);
+            } catch (e) {
+               console.warn('Could not clear local draft:', e);
             }
          }
 
          showNotification('Published successfully!', 'success');
          return true;
       } catch (error) {
-         console.error(error);
+         console.error('Publish error:', error);
+         showNotification(error.message || 'Failed to publish memo. Please try again.', 'error');
          return false;
       } finally {
          setIsAdding(false);
@@ -97,7 +182,7 @@ export const UpdateMemo = forwardRef(({ referenceNumber, date, head, content, ty
 
    const showNotification = (message, type) => {
       setNotification({ message, type });
-      setTimeout(() => setNotification(null), 3000);
+      setTimeout(() => setNotification(null), 3500);
    };
 
    useImperativeHandle(ref, () => ({
@@ -118,24 +203,40 @@ export const UpdateMemo = forwardRef(({ referenceNumber, date, head, content, ty
             return false;
          }
 
-         const { data: { user } } = await supabase.auth.getUser();
-
-         const { error } = await supabase.from('memo').update({
-            date: date,
-            head: head,
-            content: content,
-            type: type,
-            last_edited_by: user?.email,
-         }).eq('reference', referenceNumber);
-
-         if (error) {
-            showNotification('Server error, please try again', 'error');
+         const { user, error: userError } = await getActiveUser(supabase);
+         if (!user) {
+            console.error('User auth verification failed:', userError);
+            showNotification('Your session expired. Please open a new tab to log in, then click Update again.', 'error');
             return false;
          }
+
+         const { error } = await withTimeout(
+            supabase.from('memo').update({
+               date: date,
+               head: head,
+               content: content,
+               type: type,
+               last_edited_by: user?.email,
+            }).eq('reference', referenceNumber),
+            12000,
+            'Updating memo timed out. Please check your internet connection.'
+         );
+
+         if (error) {
+            if (error.code === '42501') {
+               showNotification('Permission denied or session expired. Please re-login.', 'error');
+               return false;
+            } else {
+               showNotification(error.message || 'Server error, please try again', 'error');
+               return false;
+            }
+         }
+
          showNotification('Updated successfully!', 'success');
          return true;
       } catch (error) {
-         console.error(error);
+         console.error('Update error:', error);
+         showNotification(error.message || 'Failed to update memo. Please try again.', 'error');
          return false;
       } finally {
          setIsAdding(false);
