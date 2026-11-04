@@ -35,6 +35,15 @@ export const GAMES = [
       hidden: false,
       description: 'Match colours and text under pressure. Can you ignore the word and pick the right card?',
       howToPlay: 'Read the instruction: find the card whose background, text colour or word matches the target colour. You have 5 seconds per round and 3 lives. Wrong picks and timeouts cost a life. Tap a card or press keys 1-4. Each correct answer adds a point.',
+   },
+   {
+      slug: 'unmasked',
+      name: 'Unmasked',
+      developer: 'apcodesphere',
+      developerLink: 'https://github.com/apreezofficial',
+      releaseDate: '09/11/2026',
+      description: 'Flip the tiles and find the matching shapes in as few tries as you can.',
+      howToPlay: 'Tap a tile to reveal its shape, then tap a second one. If the shapes match, they stay revealed. Find all 6 pairs using as few tries as you can, and as fast as you can. Fewer tries and less time give a higher score.',
    }
 ];
 
