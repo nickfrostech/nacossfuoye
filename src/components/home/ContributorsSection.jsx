@@ -9,6 +9,7 @@ import {
    GraduationCap
 } from 'lucide-react';
 import { PORTAL_CONTRIBUTORS } from '@/data/portal-updates';
+import RepoStatsCard from '@/components/home/RepoStatsCard';
 
 const REPO_URL = 'https://github.com/nickfrostech/nacossfuoye';
 
@@ -19,7 +20,7 @@ export default function ContributorsSection() {
          {/* Section Header */}
          <div className="mb-8">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-               Portal Contributors
+               Portal Contributors & Open Source
             </h2>
             <p className="text-slate-500 text-sm sm:text-base font-medium mt-1 max-w-xl">
                Meet the student engineers and open-source contributors powering the NACOSS FUOYE digital experience.
@@ -113,6 +114,11 @@ export default function ContributorsSection() {
                   </a>
                </div>
             </div>
+         </div>
+
+         {/* GitHub Weekly Update Flyer Card at the end of contributors */}
+         <div className="mt-12 pt-4">
+            <RepoStatsCard />
          </div>
       </section>
    );

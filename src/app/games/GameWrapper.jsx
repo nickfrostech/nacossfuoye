@@ -89,9 +89,23 @@ export default function GameWrapper({ slug, GameComponent }) {
    }
 
    const isDev = process.env.NODE_ENV !== 'production';
-   const isDevBypass = isDev && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('dev') === 'true';
+   const isVercelPreview =
+      process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' ||
+      (typeof window !== 'undefined' && (
+         window.location.hostname.includes('-git-') ||
+         (window.location.hostname.endsWith('.vercel.app') && !window.location.hostname.startsWith('nacossfuoye.vercel.app'))
+      ));
+   const isPreviewOrDev = isDev || isVercelPreview;
 
-   if ((isGameComingSoon(game) || !isGameReleased(game)) && !isDevBypass) {
+   const [previewBypassed, setPreviewBypassed] = useState(() => {
+      if (typeof window === 'undefined') return false;
+      const params = new URLSearchParams(window.location.search);
+      return params.get('dev') === 'true' || params.get('preview') === 'true';
+   });
+
+   const isTestingBypass = isPreviewOrDev && previewBypassed;
+
+   if ((isGameComingSoon(game) || !isGameReleased(game)) && !isTestingBypass) {
       return (
          <main className="max-w-2xl mx-auto p-4 md:p-8">
             <button
@@ -158,9 +172,34 @@ export default function GameWrapper({ slug, GameComponent }) {
                   </p>
                </div>
 
+               {isPreviewOrDev && (
+                  <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 mb-6 text-left">
+                     <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                           <Sparkles size={14} className="text-indigo-600" />
+                           Vercel Preview / Testing Mode
+                        </span>
+                        <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full uppercase">
+                           Testing Allowed
+                        </span>
+                     </div>
+                     <p className="text-xs text-indigo-900 mb-3 font-medium">
+                        You are on a preview or local environment. You can test and play this game before accepting the pull request or public release.
+                     </p>
+                     <button
+                        type="button"
+                        onClick={() => setPreviewBypassed(true)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs transition-all active:scale-95 cursor-pointer shadow-xs"
+                     >
+                        <Play size={14} />
+                        <span>Launch Game in Test / Preview Mode</span>
+                     </button>
+                  </div>
+               )}
+
                <button
                   onClick={() => router.push('/games')}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-sm transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all active:scale-95 cursor-pointer"
                >
                   <span>Play This Week's Active Game</span>
                   <ArrowRight size={16} />
@@ -275,10 +314,10 @@ export default function GameWrapper({ slug, GameComponent }) {
             <ArrowLeft size={18} className="mr-2" /> Back to Games Hub
          </button>
 
-         {isDevBypass && (
+         {isTestingBypass && (
             <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-900 font-bold">
-               <span>🛠️ Local Dev Testing Mode &bull; Unreleased Game ({game.releaseDate})</span>
-               <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase">?dev=true</span>
+               <span>🛠️ Preview Testing Mode &bull; Unreleased Game ({game.releaseDate})</span>
+               <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase">Preview Active</span>
             </div>
          )}
 

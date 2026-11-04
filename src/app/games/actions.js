@@ -18,6 +18,20 @@ if (typeof setInterval !== 'undefined') {
 }
 
 /**
+ * Checks whether unreleased / upcoming games are allowed to be played.
+ * Allowed in:
+ * 1. Local development (NODE_ENV !== 'production')
+ * 2. Vercel Preview Deployments (VERCEL_ENV === 'preview' or NEXT_PUBLIC_VERCEL_ENV === 'preview')
+ */
+function canPlayUnreleasedGames() {
+   const isDev = process.env.NODE_ENV !== 'production';
+   const isVercelPreview =
+      process.env.VERCEL_ENV === 'preview' ||
+      process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
+   return isDev || isVercelPreview;
+}
+
+/**
  * Creates a cryptographically signed game session token using a private server secret.
  * The client receives the signed token but never has access to the server salt.
  */
@@ -26,9 +40,9 @@ export async function createGameSession(game_slug) {
       return { success: false, error: 'Invalid game slug' };
    }
 
-   const isDev = process.env.NODE_ENV !== 'production';
+   const allowUnreleased = canPlayUnreleasedGames();
    const game = getGameBySlug(game_slug);
-   if ((!game || !isGameReleased(game)) && !isDev) {
+   if ((!game || !isGameReleased(game)) && !allowUnreleased) {
       return { success: false, error: 'This game has not been released yet.' };
    }
 
@@ -60,9 +74,9 @@ export async function submitScore(data, sessionToken) {
       return { success: false, error: 'Invalid score payload' };
    }
 
-   const isDev = process.env.NODE_ENV !== 'production';
+   const allowUnreleased = canPlayUnreleasedGames();
    const game = getGameBySlug(data.game_slug);
-   if ((!game || !isGameReleased(game)) && !isDev) {
+   if ((!game || !isGameReleased(game)) && !allowUnreleased) {
       return { success: false, error: 'This game has not been released yet.' };
    }
 
