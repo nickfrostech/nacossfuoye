@@ -252,15 +252,13 @@ export default function GamesDirectory() {
                      <p className="text-slate-600 mb-6 grow text-sm leading-relaxed font-medium">{game.description}</p>
 
                      {isComing ? (
-                        <button
-                           type="button"
-                           disabled
-                           aria-disabled="true"
-                           className="w-full text-center font-bold py-3 px-4 rounded-xl bg-amber-50 text-amber-700/80 border border-amber-200/70 mt-auto flex items-center justify-center gap-2 text-sm cursor-not-allowed select-none pointer-events-none"
+                        <Link
+                           href={`/games/${game.slug}`}
+                           className="w-full text-center font-bold py-3 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 hover:text-amber-800 border border-amber-200 mt-auto flex items-center justify-center gap-2 text-sm transition-all duration-200 cursor-pointer"
                         >
-                           <Lock size={15} className="text-amber-600/80" />
-                           <span>Coming Soon &bull; {game.releaseDate}</span>
-                        </button>
+                           <Lock size={15} className="text-amber-600" />
+                           <span>Preview &bull; Releases {game.releaseDate}</span>
+                        </Link>
                      ) : (
                         <Link
                            href={`/games/${game.slug}`}
