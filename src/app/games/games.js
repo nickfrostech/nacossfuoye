@@ -37,11 +37,21 @@ export const GAMES = [
       howToPlay: 'Read the instruction: find the card whose background, text colour or word matches the target colour. You have 5 seconds per round and 3 lives. Wrong picks and timeouts cost a life. Tap a card or press keys 1-4. Each correct answer adds a point.',
    },
    {
+      slug: 'typing-chaos',
+      name: 'Typing Chaos',
+      developer: 'Nick Frost',
+      developerLink: 'https://github.com/nickfrostech',
+      releaseDate: '09/11/2026',
+      hidden: false,
+      description: 'Conquer the clock by typing random sentences using a chaotic scrambled on-screen keyboard bubble grid!',
+      howToPlay: 'A random sentence appears on screen. Tap the scrambled on-screen bubble tiles to type each letter in order, and tap the dedicated [ SPACE ] button between words. There is no backspace: wrong keys lose streak and deduct points! Complete sentences to earn bonus seconds and build up your high score before the 60s timer expires.',
+   },
+   {
       slug: 'unmasked',
       name: 'Unmasked',
       developer: 'apcodesphere',
       developerLink: 'https://github.com/apreezofficial',
-      releaseDate: '09/11/2026',
+      releaseDate: '16/11/2026',
       description: 'Flip the tiles and find the matching shapes in as few tries as you can.',
       howToPlay: 'Tap a tile to reveal its shape, then tap a second one. If the shapes match, they stay revealed. Find all 6 pairs using as few tries as you can, and as fast as you can. Fewer tries and less time give a higher score.',
    }

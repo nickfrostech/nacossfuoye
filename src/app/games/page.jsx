@@ -11,6 +11,18 @@ export default function GamesDirectory() {
    const activeGame = getActiveGame();
    const [topScores, setTopScores] = useState([]);
    const [loading, setLoading] = useState(true);
+   const [canPreview, setCanPreview] = useState(false);
+
+   useEffect(() => {
+      const isDev = process.env.NODE_ENV !== 'production';
+      const isVercel =
+         process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' ||
+         (typeof window !== 'undefined' && (
+            window.location.hostname.includes('-git-') ||
+            (window.location.hostname.endsWith('.vercel.app') && !window.location.hostname.startsWith('nacossfuoye.vercel.app'))
+         ));
+      setCanPreview(isDev || isVercel);
+   }, []);
 
    useEffect(() => {
       let isMounted = true;
@@ -252,13 +264,24 @@ export default function GamesDirectory() {
                      <p className="text-slate-600 mb-6 grow text-sm leading-relaxed font-medium">{game.description}</p>
 
                      {isComing ? (
-                        <Link
-                           href={`/games/${game.slug}`}
-                           className="w-full text-center font-bold py-3 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 hover:text-amber-800 border border-amber-200 mt-auto flex items-center justify-center gap-2 text-sm transition-all duration-200 cursor-pointer"
-                        >
-                           <Lock size={15} className="text-amber-600" />
-                           <span>Preview &bull; Releases {game.releaseDate}</span>
-                        </Link>
+                        canPreview ? (
+                           <Link
+                              href={`/games/${game.slug}`}
+                              className="w-full text-center font-bold py-3 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 mt-auto flex items-center justify-center gap-2 text-sm transition-all duration-200 cursor-pointer"
+                           >
+                              <Sparkles size={15} className="text-amber-600" />
+                              <span>Test Game &bull; {game.releaseDate}</span>
+                           </Link>
+                        ) : (
+                           <button
+                              type="button"
+                              disabled
+                              className="w-full text-center font-bold py-3 px-4 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 mt-auto flex items-center justify-center gap-2 text-sm cursor-not-allowed select-none opacity-80"
+                           >
+                              <Lock size={15} className="text-slate-400" />
+                              <span>Locked &bull; Releases {game.releaseDate}</span>
+                           </button>
+                        )
                      ) : (
                         <Link
                            href={`/games/${game.slug}`}

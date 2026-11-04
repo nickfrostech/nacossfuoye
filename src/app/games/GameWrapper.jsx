@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, notFound } from 'next/navigation';
-import { getGameBySlug, isGameReleased, isGameActive, isGameComingSoon } from './games';
-import { ArrowLeft, Trophy, Code, Settings, Star, Lock, Sparkles, Clock, ArrowRight } from 'lucide-react';
+import { getGameBySlug, isGameActive, isGameReleased } from './games';
+import { ArrowLeft, Trophy, Code, Settings, Star, Flame } from 'lucide-react';
 import { GamePad } from '@esvigy/react';
 
 import { submitScore, getLeaderboard, createGameSession } from './actions';
@@ -16,6 +16,8 @@ export default function GameWrapper({ slug, GameComponent }) {
    const [showStartModal, setShowStartModal] = useState(true);
    const [showSwitchModal, setShowSwitchModal] = useState(false);
    const [gameOverScore, setGameOverScore] = useState(null);
+   const [gameOverStats, setGameOverStats] = useState(null);
+   const [gameSessionKey, setGameSessionKey] = useState(0);
    const [formData, setFormData] = useState({ name: '', level: '100L' });
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [leaderboard, setLeaderboard] = useState([]);
@@ -84,10 +86,6 @@ export default function GameWrapper({ slug, GameComponent }) {
       }
    }, []);
 
-   if (!game || game.hidden) {
-      notFound();
-   }
-
    const isDev = process.env.NODE_ENV !== 'production';
    const isVercelPreview =
       process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' ||
@@ -97,117 +95,11 @@ export default function GameWrapper({ slug, GameComponent }) {
       ));
    const isPreviewOrDev = isDev || isVercelPreview;
 
-   const [previewBypassed, setPreviewBypassed] = useState(() => {
-      if (typeof window === 'undefined') return false;
-      const params = new URLSearchParams(window.location.search);
-      return params.get('dev') === 'true' || params.get('preview') === 'true';
-   });
-
-   const isTestingBypass = isPreviewOrDev && previewBypassed;
-
-   if ((isGameComingSoon(game) || !isGameReleased(game)) && !isTestingBypass) {
-      return (
-         <main className="max-w-2xl mx-auto p-4 md:p-8">
-            <button
-               onClick={() => router.push('/games')}
-               className="inline-flex items-center text-slate-500 hover:text-indigo-700 font-medium mb-6 transition-colors"
-            >
-               <ArrowLeft size={18} className="mr-2" /> Back to Games Hub
-            </button>
-
-            <div className="bg-white border-2 border-dashed border-amber-300 rounded-3xl p-6 sm:p-10 text-center shadow-xs">
-               <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
-                  <Lock size={28} />
-               </div>
-
-               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider mb-3 border border-amber-200">
-                  <Sparkles size={13} className="text-amber-500" />
-                  <span>Coming Soon to Arcade Arena</span>
-               </div>
-
-               <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">
-                  {game.name}
-               </h1>
-
-               <div className="text-xs sm:text-sm text-slate-500 font-medium mb-6">
-                  Crafted by{' '}
-                  <a
-                     href={game.developerLink}
-                     target="_blank"
-                     rel="noreferrer"
-                     className="text-indigo-700 hover:underline font-bold"
-                  >
-                     {game.developer}
-                  </a>
-               </div>
-
-               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 mb-6 text-left space-y-3">
-                  <div>
-                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                        Game Concept
-                     </span>
-                     <p className="text-slate-600 text-sm leading-relaxed">
-                        {game.description}
-                     </p>
-                  </div>
-                  {game.howToPlay && (
-                     <div className="pt-2 border-t border-slate-200/60">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                           How to Play (Preview)
-                        </span>
-                        <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                           {game.howToPlay}
-                        </p>
-                     </div>
-                  )}
-               </div>
-
-               <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/70 mb-6">
-                  <div className="text-xs sm:text-sm font-bold text-amber-900 flex items-center justify-center gap-2">
-                     <Clock size={16} className="text-amber-600" />
-                     <span>Official Release Date: <strong className="text-amber-700">{game.releaseDate}</strong></span>
-                  </div>
-                  <p className="text-xs text-amber-700/80 mt-1">
-                     This game is currently locked. It will automatically unlock on its release date for live tournament play.
-                  </p>
-               </div>
-
-               {isPreviewOrDev && (
-                  <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 mb-6 text-left">
-                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                           <Sparkles size={14} className="text-indigo-600" />
-                           Vercel Preview / Testing Mode
-                        </span>
-                        <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full uppercase">
-                           Testing Allowed
-                        </span>
-                     </div>
-                     <p className="text-xs text-indigo-900 mb-3 font-medium">
-                        You are on a preview or local environment. You can test and play this game before accepting the pull request or public release.
-                     </p>
-                     <button
-                        type="button"
-                        onClick={() => setPreviewBypassed(true)}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs transition-all active:scale-95 cursor-pointer shadow-xs"
-                     >
-                        <Play size={14} />
-                        <span>Launch Game in Test / Preview Mode</span>
-                     </button>
-                  </div>
-               )}
-
-               <button
-                  onClick={() => router.push('/games')}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all active:scale-95 cursor-pointer"
-               >
-                  <span>Play This Week's Active Game</span>
-                  <ArrowRight size={16} />
-               </button>
-            </div>
-         </main>
-      );
+   if (!game || game.hidden || (!isGameReleased(game) && !isPreviewOrDev)) {
+      notFound();
    }
+
+
 
    const handleStart = (e) => {
       e.preventDefault();
@@ -219,8 +111,9 @@ export default function GameWrapper({ slug, GameComponent }) {
       setShowSwitchModal(false);
    };
 
-   const handleGameOver = (finalScore) => {
+   const handleGameOver = (finalScore, stats = null) => {
       setGameOverScore(finalScore);
+      setGameOverStats(stats);
 
       const { count, startTime } = humanInputsRef.current;
       const elapsedSeconds = startTime > 0 ? (Date.now() - startTime) / 1000 : 0;
@@ -309,62 +202,55 @@ export default function GameWrapper({ slug, GameComponent }) {
    );
 
    return (
-      <div className="max-w-4xl mx-auto p-4 md:p-6 relative">
-         <button onClick={() => router.push('/games')} className="inline-flex items-center text-slate-500 hover:text-indigo-700 font-medium mb-6 transition-colors">
-            <ArrowLeft size={18} className="mr-2" /> Back to Games Hub
+      <div className="max-w-4xl mx-auto p-1.5 sm:p-4 md:p-6 relative">
+         <button onClick={() => router.push('/games')} className="inline-flex items-center text-slate-500 hover:text-indigo-700 font-medium mb-1.5 sm:mb-4 transition-colors text-xs sm:text-sm">
+            <ArrowLeft size={15} className="mr-1" /> Back to Games Hub
          </button>
 
-         {isTestingBypass && (
-            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs text-amber-900 font-bold">
-               <span>🛠️ Preview Testing Mode &bull; Unreleased Game ({game.releaseDate})</span>
-               <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase">Preview Active</span>
-            </div>
-         )}
-
-         <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm mb-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-               <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 flex items-center flex-wrap gap-3">
+         <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-8 shadow-xs mb-2 sm:mb-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-1.5 sm:gap-4 mb-1.5 sm:mb-3">
+               <h1 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-slate-800 flex items-center flex-wrap gap-1.5 sm:gap-3">
                   {game.name}
                   {isGameActive(game)
-                     ? <span className="bg-indigo-100 text-indigo-700 text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider">Weekly Live</span>
-                     : <span className="bg-slate-100 text-slate-500 text-sm px-3 py-1 rounded-full font-bold uppercase tracking-wider">Archived</span>
+                     ? <span className="bg-indigo-100 text-indigo-700 text-[10px] sm:text-sm px-2 py-0.5 sm:py-1 rounded-full font-bold uppercase tracking-wider">Weekly Live</span>
+                     : <span className="bg-slate-100 text-slate-500 text-[10px] sm:text-sm px-2 py-0.5 sm:py-1 rounded-full font-bold uppercase tracking-wider">Archived</span>
                   }
                </h1>
 
-               <a href={game.developerLink} target="_blank" rel="noreferrer" className="inline-flex items-center text-sm font-semibold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors w-fit">
-                  <Code size={16} className="mr-2" /> Built by {game.developer}
+               <a href={game.developerLink} target="_blank" rel="noreferrer" className="inline-flex items-center text-[11px] sm:text-sm font-semibold bg-slate-100 text-slate-600 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg hover:bg-slate-200 transition-colors w-fit">
+                  <Code size={13} className="mr-1" /> Built by {game.developer}
                </a>
             </div>
 
-            <p className="text-slate-600 text-lg mb-6">{game.description}</p>
+            <p className="text-slate-600 text-xs sm:text-base mb-2 sm:mb-4 leading-relaxed font-medium">{game.description}</p>
 
-            <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-sm text-slate-700 leading-relaxed shadow-inner">
-               <strong className="text-slate-900 block mb-1">How to play:</strong>
+            <div className="bg-slate-50 border border-slate-100 p-2 sm:p-4 rounded-xl text-[11px] sm:text-sm text-slate-700 leading-relaxed shadow-inner">
+               <strong className="text-slate-900 block mb-0.5">How to play:</strong>
                {game.howToPlay}
             </div>
          </div>
 
          {showStartModal ? (
-            <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl max-w-md mx-auto text-center">
-               <div className="w-24 h-24 mx-auto mb-3 flex items-center justify-center">
-                  <GamePad animated={true} color="#9333ea" secondaryColor="rgba(147,51,234,0.12)" className="w-24 h-24 filter drop-shadow-md" />
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl max-w-md mx-auto text-center">
+               <div className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-2 flex items-center justify-center">
+                  <GamePad animated={true} color="#9333ea" secondaryColor="rgba(147,51,234,0.12)" className="w-16 h-16 sm:w-24 sm:h-24 filter drop-shadow-md" />
                </div>
-               <h2 className="text-2xl font-bold mb-2 text-slate-800">Join the Leaderboard</h2>
-               <p className="text-slate-500 mb-6 text-sm">Enter your gaming profile to save your high scores.</p>
+               <h2 className="text-xl sm:text-2xl font-bold mb-1 text-slate-800">Join the Leaderboard</h2>
+               <p className="text-slate-500 mb-3 sm:mb-6 text-xs sm:text-sm">Enter your gaming profile to save your high scores.</p>
                {renderPlayerForm()}
             </div>
          ) : (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xl relative">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-2 sm:p-6 shadow-xl relative overflow-hidden">
 
                {/* Player Header */}
-               <div className="flex flex-wrap justify-between items-center mb-8 border-b border-slate-100 pb-4 gap-4">
-                  <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-600">
+               <div className="flex flex-wrap justify-between items-center mb-1.5 sm:mb-4 border-b border-slate-100 pb-1.5 sm:pb-3 gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                     <div className="w-7 h-7 sm:w-10 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-600 text-xs sm:text-sm">
                         {player?.name?.charAt(0).toUpperCase()}
                      </div>
                      <div>
-                        <div className="font-extrabold text-slate-800">{player?.name}</div>
-                        <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{player?.level}</div>
+                        <div className="font-extrabold text-slate-800 text-xs sm:text-sm">{player?.name}</div>
+                        <div className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">{player?.level}</div>
                      </div>
                   </div>
                   <button
@@ -372,9 +258,9 @@ export default function GameWrapper({ slug, GameComponent }) {
                         setFormData({ name: player?.name || '', level: player?.level || '100L' });
                         setShowSwitchModal(true);
                      }}
-                     className="inline-flex items-center text-sm text-slate-500 hover:text-indigo-700 font-semibold transition-colors bg-slate-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg"
+                     className="inline-flex items-center text-xs sm:text-sm text-slate-500 hover:text-indigo-700 font-semibold transition-colors bg-slate-50 hover:bg-indigo-50 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg"
                   >
-                     <Settings size={16} className="mr-2" /> Switch Player
+                     <Settings size={13} className="mr-1" /> Switch Player
                   </button>
                </div>
 
@@ -382,36 +268,64 @@ export default function GameWrapper({ slug, GameComponent }) {
                <div
                   onPointerDownCapture={handleInteraction}
                   onKeyDownCapture={handleInteraction}
-                  className="flex justify-center items-center min-h-100"
+                  className="flex justify-center items-center min-h-0 sm:min-h-96 w-full"
                >
                   {GameComponent ? (
-                     <GameComponent onGameOver={handleGameOver} player={player} />
+                     <GameComponent key={gameSessionKey} onGameOver={handleGameOver} player={player} />
                   ) : (
                      <div className="p-10 text-slate-400 font-medium">Game logic not found.</div>
                   )}
                </div>
 
-               {/* Game Over Overlay Modal */}
+               {/* Game Over Overlay Modal: Solid clean card isolating the result view */}
                {gameOverScore !== null && (
-                  <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-3xl flex flex-col items-center justify-center z-20 animate-in fade-in duration-300">
-                     <div className="bg-white border border-slate-200 shadow-2xl p-8 rounded-2xl max-w-sm w-full text-center">
-                        <Trophy size={48} className="mx-auto text-yellow-400 mb-4" />
-                        <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Game Over!</h2>
-                        <div className="text-slate-500 font-medium mb-6">
-                           Your Score: <span className="text-4xl block text-indigo-700 font-black mt-2">{gameOverScore}</span>
+                  <div className="absolute inset-0 bg-white rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center z-20 animate-in fade-in duration-200 p-4">
+                     <div className="bg-white border border-slate-200 shadow-xl p-5 sm:p-7 rounded-2xl max-w-sm w-full text-center">
+                        <Trophy size={42} className="mx-auto text-amber-400 mb-2" />
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-1">Game Over!</h2>
+                        <div className="text-slate-500 font-medium mb-3">
+                           Your Score: <span className="text-3xl sm:text-4xl block text-indigo-700 font-black mt-0.5">{gameOverScore}</span>
                         </div>
 
+                        {/* Rich stats breakdown (Sentences, Accuracy, Streak) */}
+                        {gameOverStats && (
+                           <div className="grid grid-cols-3 gap-1.5 text-center text-xs mb-3.5">
+                              {gameOverStats.sentences !== undefined && (
+                                 <div className="bg-slate-50 p-1.5 sm:p-2 rounded-xl border border-slate-100 font-bold">
+                                    <span className="block text-slate-800 text-sm font-black">{gameOverStats.sentences}</span>
+                                    <span className="text-slate-400 text-[10px]">Sentences</span>
+                                 </div>
+                              )}
+                              {gameOverStats.accuracy !== undefined && (
+                                 <div className="bg-slate-50 p-1.5 sm:p-2 rounded-xl border border-slate-100 font-bold">
+                                    <span className="block text-slate-800 text-sm font-black">{gameOverStats.accuracy}%</span>
+                                    <span className="text-slate-400 text-[10px]">Accuracy</span>
+                                 </div>
+                              )}
+                              {gameOverStats.maxStreak !== undefined && (
+                                 <div className="bg-slate-50 p-1.5 sm:p-2 rounded-xl border border-slate-100 font-bold">
+                                    <span className="block text-amber-600 text-sm font-black flex items-center justify-center gap-0.5">
+                                       {gameOverStats.maxStreak} <Flame size={12} className="fill-amber-500" />
+                                    </span>
+                                    <span className="text-slate-400 text-[10px]">Streak</span>
+                                 </div>
+                              )}
+                           </div>
+                        )}
+
                         {isSubmitting ? (
-                           <div className="text-sm text-slate-500 animate-pulse mb-6">Saving to leaderboard...</div>
+                           <div className="text-xs text-slate-500 animate-pulse mb-3">Saving to leaderboard...</div>
                         ) : null}
 
                         <button
                            onClick={() => {
                               setGameOverScore(null);
+                              setGameOverStats(null);
+                              setGameSessionKey(k => k + 1);
                               humanInputsRef.current = { count: 0, startTime: 0, lastTime: 0 };
                               refreshSession();
                            }}
-                           className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl hover:bg-indigo-800 transition"
+                           className="w-full bg-indigo-700 text-white font-bold py-3 rounded-xl hover:bg-indigo-800 active:scale-95 transition cursor-pointer text-sm shadow-md shadow-indigo-600/20"
                         >
                            Play Again
                         </button>
