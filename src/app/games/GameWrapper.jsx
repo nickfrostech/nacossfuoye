@@ -304,7 +304,7 @@ export default function GameWrapper({ slug, GameComponent }) {
                               )}
                               {gameOverStats.maxStreak !== undefined && (
                                  <div className="bg-slate-50 p-1.5 sm:p-2 rounded-xl border border-slate-100 font-bold">
-                                    <span className="block text-amber-600 text-sm font-black flex items-center justify-center gap-0.5">
+                                    <span className="text-amber-600 text-sm font-black flex items-center justify-center gap-0.5">
                                        {gameOverStats.maxStreak} <Flame size={12} className="fill-amber-500" />
                                     </span>
                                     <span className="text-slate-400 text-[10px]">Streak</span>

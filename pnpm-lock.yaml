@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@esvigy/react':
-        specifier: ^0.1.1
-        version: 0.1.1(react@19.3.0)
+        specifier: ^0.2.0
+        version: 0.2.0(react@19.3.0)
       '@floating-ui/react':
         specifier: ^0.27.20
         version: 0.27.20(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -220,8 +220,8 @@ packages:
     resolution: {integrity: sha512-Z5kJ+wU3oA7MMIqVR9tyZRtjYPr4OC004Q4Rw7pgOKUOKkJfZ3O24nz3WYfGRpMDNmcOi3TwQOmgm7B7Tpii0w==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@esvigy/react@0.1.1':
-    resolution: {integrity: sha512-sJ1lNhm4Gdz1OBJCPtxJkwFfO/pjAlu5eBnfz3rwTbhd8UJMK5Gk3jevjEW+z4IIOz1KWw0y+kI+RdnjXGzA+g==}
+  '@esvigy/react@0.2.0':
+    resolution: {integrity: sha512-FxliAkcPyUoBblw3TyJwwlhbDACUgSbL414f/v8/7tzJbcirOm58eL1QNN+evW3TLqSHzQU8NFoQ2x81sw6T8A==}
     peerDependencies:
       react: '>=18'
 
@@ -2002,7 +2002,7 @@ snapshots:
       '@eslint/core': 0.15.2
       levn: 0.4.1
 
-  '@esvigy/react@0.1.1(react@19.3.0)':
+  '@esvigy/react@0.2.0(react@19.3.0)':
     dependencies:
       react: 19.3.0
 

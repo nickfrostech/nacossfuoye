@@ -2,17 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import {
-   FileText,
-   ArrowRight,
-   UserStar,
-   Image as ImageIcon
-} from 'lucide-react';
-import {
-   GamePad,
+   Announcement,
    DocumentFolders,
    WomanLaptop,
-   ActionCreate
+   GroupBrainstorming,
+   EmployeesOffice,
+   GamePad,
+   BalloonPackage
 } from '@esvigy/react';
 
 export default function ActivitiesGrid() {
@@ -29,8 +27,8 @@ export default function ActivitiesGrid() {
                href="/memos"
                className="relative group flex flex-col p-8 rounded-3xl overflow-hidden border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] hover:z-20 active:scale-[0.98] bg-emerald-700 text-white min-h-70"
             >
-               <div className="absolute -bottom-8 -right-8 text-white/10 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
-                  <FileText size={220} strokeWidth={1.2} />
+               <div className="absolute -bottom-10 -right-10 opacity-20 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
+                  <Announcement animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-64 h-64" />
                </div>
 
                <div className="relative z-10 flex flex-col h-full">
@@ -114,7 +112,7 @@ export default function ActivitiesGrid() {
                className="relative group flex flex-col p-8 rounded-3xl overflow-hidden border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] hover:z-20 active:scale-[0.98] bg-amber-700 text-white min-h-70"
             >
                <div className="absolute -bottom-10 -right-10 opacity-20 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
-                  <ActionCreate animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-64 h-64" />
+                  <GroupBrainstorming animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-64 h-64" />
                </div>
 
                <div className="relative z-10 flex flex-col h-full">
@@ -141,8 +139,8 @@ export default function ActivitiesGrid() {
                href="/governance"
                className="relative group flex flex-col p-8 rounded-3xl overflow-hidden border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] hover:z-20 active:scale-[0.98] bg-green-700 text-white min-h-70"
             >
-               <div className="absolute -bottom-8 -right-8 text-white/10 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
-                  <UserStar size={220} strokeWidth={1.2} />
+               <div className="absolute -bottom-10 -right-10 opacity-20 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
+                  <EmployeesOffice animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-64 h-64" />
                </div>
 
                <div className="relative z-10 flex flex-col h-full">
@@ -197,8 +195,8 @@ export default function ActivitiesGrid() {
                href="/graphics"
                className="relative group flex flex-col p-8 rounded-3xl overflow-hidden border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.03] hover:z-20 active:scale-[0.98] bg-purple-700 text-white min-h-70 md:col-span-2 lg:col-span-1"
             >
-               <div className="absolute -bottom-8 -right-8 text-white/10 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
-                  <ImageIcon size={220} strokeWidth={1.2} />
+               <div className="absolute -bottom-10 -right-10 opacity-20 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 pointer-events-none">
+                  <BalloonPackage animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-64 h-64" />
                </div>
 
                <div className="relative z-10 flex flex-col h-full">

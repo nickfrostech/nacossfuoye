@@ -9,7 +9,7 @@ import {
    ChevronDown,
    RotateCcw
 } from 'lucide-react';
-import { DocumentFolders } from '@esvigy/react';
+import { Announcement } from '@esvigy/react';
 import MemoCard from '@/components/MemoCard';
 import PageHeader from '@/components/PageHeader';
 
@@ -358,7 +358,7 @@ export default function MemosList() {
             </div>
          ) : (
             <div className="text-center py-16 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center">
-               <DocumentFolders
+               <Announcement
                   animated={true}
                   color="#039133"
                   secondaryColor="rgba(3,145,51,0.08)"

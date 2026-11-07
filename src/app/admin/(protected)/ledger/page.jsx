@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import PageHeader from '@/components/PageHeader';
 import { useRouter } from 'next/navigation';
 import { Plus, X } from 'lucide-react';
-import { Wallet } from '@esvigy/react';
+import { PaymentReceipt } from '@esvigy/react';
 import Notification from '@/components/Notification';
 
 const formatCurrency = (value) => {
@@ -315,7 +315,7 @@ export default function LedgerPage() {
                         <tr>
                            <td colSpan="6" className="py-16 text-center text-slate-400 font-medium">
                               <div className="flex flex-col items-center justify-center">
-                                 <Wallet animated={true} color="#2563eb" secondaryColor="rgba(37,99,235,0.08)" className="w-24 h-24 mb-3 opacity-80" />
+                                 <PaymentReceipt animated={true} color="#2563eb" secondaryColor="rgba(37,99,235,0.08)" className="w-28 h-28 mb-3 opacity-90" />
                                  <p className="text-slate-600 font-semibold text-base">No transactions recorded yet</p>
                                  <p className="text-slate-400 text-xs mt-1">Use the "New Transaction" button above to log income or expenses.</p>
                               </div>

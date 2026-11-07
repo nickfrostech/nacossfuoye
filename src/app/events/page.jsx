@@ -9,7 +9,7 @@ import {
    ExternalLink,
    Trophy,
 } from 'lucide-react';
-import { ActionCreate } from '@esvigy/react';
+import { GroupBrainstorming } from '@esvigy/react';
 import { DEPARTMENT_EVENTS, EXTERNAL_HACKATHONS } from '@/data/portal-updates';
 
 const PRO_WHATSAPP_NUMBER = '2348055986730';
@@ -29,11 +29,11 @@ export default function EventsPage() {
 
    return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-         {/* Events & Hackathons Hero Section (solid bg-amber-700 with ActionCreate watermark) */}
+         {/* Events & Hackathons Hero Section (solid bg-amber-700 with GroupBrainstorming watermark) */}
          <section className="relative overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-amber-700 p-6 sm:p-10 md:p-14 mb-10 text-white">
-            {/* Background Watermark ActionCreate SVG */}
+            {/* Background Watermark GroupBrainstorming SVG */}
             <div className="absolute -right-8 -bottom-12 sm:-right-12 sm:-bottom-16 md:-right-16 md:-bottom-20 lg:-right-12 lg:-bottom-16 w-72 h-72 sm:w-96 sm:h-96 md:w-120 md:h-120 lg:w-xl lg:h-144 opacity-20 pointer-events-none select-none">
-               <ActionCreate
+               <GroupBrainstorming
                   animated={true}
                   color="#ffffff"
                   secondaryColor="rgba(255,255,255,0.2)"

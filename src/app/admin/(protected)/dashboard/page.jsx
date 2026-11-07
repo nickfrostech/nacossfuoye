@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
-import { FileText, ArrowRight, Quote, Image as ImageIcon, Wallet, Shield } from 'lucide-react';
+import { ArrowRight, Quote, Shield } from 'lucide-react';
+import { Announcement, BalloonPackage, PaymentReceipt, Wallet } from '@esvigy/react';
 import { createClient } from '@/utils/supabase/client';
 
 const CATEGORIES = [
@@ -122,9 +123,9 @@ export default function AdminDashBoardHub() {
                         href={`/admin/dashboard/${category.id}`}
                         className="relative group h-full flex flex-col p-6 rounded-2xl overflow-hidden border border-white/20 transition-[transform] duration-300 ease-out active:scale-[0.98] bg-primary/95 text-white backdrop-blur-md"
                      >
-                        {/* Memo Icon Background Decoration */}
-                        <div className="absolute -bottom-6 -right-6 text-white/5 transition-transform duration-800 group-hover:scale-110 group-hover:-translate-y-2 group-hover:-translate-x-2 pointer-events-none">
-                           <FileText size={180} strokeWidth={1.5} />
+                        {/* Memo Illustration Background Decoration */}
+                        <div className="absolute -bottom-8 -right-8 opacity-10 transition-transform duration-500 group-hover:scale-110 pointer-events-none">
+                           <Announcement animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-48 h-48" />
                         </div>
 
                         <div className="relative z-10 flex flex-col h-full">
@@ -169,8 +170,8 @@ export default function AdminDashBoardHub() {
                         href="/admin/ledger"
                         className="relative group h-full flex flex-col p-6 rounded-2xl overflow-hidden border border-white/20 transition-[transform] duration-300 ease-out active:scale-[0.98] bg-blue-700/95 text-white backdrop-blur-md"
                      >
-                        <div className="absolute -bottom-6 -right-6 text-white/5 transition-transform duration-800 group-hover:scale-110 group-hover:-translate-y-2 group-hover:-translate-x-2 pointer-events-none">
-                           <Wallet size={180} strokeWidth={1.5} />
+                        <div className="absolute -bottom-8 -right-8 opacity-10 transition-transform duration-500 group-hover:scale-110 pointer-events-none">
+                           <PaymentReceipt animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-48 h-48" />
                         </div>
 
                         <div className="relative z-10 flex flex-col h-full">
@@ -203,8 +204,8 @@ export default function AdminDashBoardHub() {
                         href="/admin/treasurer"
                         className="relative group h-full flex flex-col p-6 rounded-2xl overflow-hidden border border-white/20 transition-[transform] duration-300 ease-out active:scale-[0.98] bg-emerald-700/95 text-white backdrop-blur-md"
                      >
-                        <div className="absolute -bottom-6 -right-6 text-white/5 transition-transform duration-800 group-hover:scale-110 group-hover:-translate-y-2 group-hover:-translate-x-2 pointer-events-none">
-                           <Wallet size={180} strokeWidth={1.5} />
+                        <div className="absolute -bottom-8 -right-8 opacity-10 transition-transform duration-500 group-hover:scale-110 pointer-events-none">
+                           <Wallet animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-48 h-48" />
                         </div>
 
                         <div className="relative z-10 flex flex-col h-full">
@@ -251,8 +252,8 @@ export default function AdminDashBoardHub() {
                         className="relative group h-full flex flex-col p-6 rounded-2xl overflow-hidden border border-white/20 transition-[transform] duration-300 ease-out active:scale-[0.98] bg-slate-800/95 text-white backdrop-blur-md"
                      >
                         {/* Icon Background Decoration */}
-                        <div className="absolute -bottom-6 -right-6 text-white/5 transition-transform duration-800 group-hover:scale-110 group-hover:-translate-y-2 group-hover:-translate-x-2 pointer-events-none">
-                           <ImageIcon size={180} strokeWidth={1.5} />
+                        <div className="absolute -bottom-8 -right-8 opacity-10 transition-transform duration-500 group-hover:scale-110 pointer-events-none">
+                           <BalloonPackage animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-48 h-48" />
                         </div>
 
                         <div className="relative z-10 flex flex-col h-full">

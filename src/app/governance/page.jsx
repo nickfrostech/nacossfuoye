@@ -9,13 +9,12 @@ import {
    Twitter,
    Linkedin,
    UserCircle2,
-   UserStar,
    Users,
    Vote,
    ShieldCheck,
    FileText
 } from 'lucide-react';
-import { ManQuestion, EmptyBox } from '@esvigy/react';
+import { ManQuestion, EmptyBox, EmployeesOffice } from '@esvigy/react';
 import stakeholdersData from '@/data/stakeholders.json';
 
 export default function GovernancePage() {
@@ -26,11 +25,16 @@ export default function GovernancePage() {
 
    return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-         {/* Governance Hero Section (solid bg-green-700 with UserStar watermark) */}
+         {/* Governance Hero Section (solid bg-green-700 with EmployeesOffice watermark) */}
          <section className="relative overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-green-700 p-6 sm:p-10 md:p-14 mb-10 text-white">
-            {/* Background Watermark UserStar SVG */}
-            <div className="absolute -right-8 -bottom-12 sm:-right-12 sm:-bottom-16 md:-right-16 md:-bottom-20 lg:-right-12 lg:-bottom-16 w-72 h-72 sm:w-96 sm:h-96 md:w-120 md:h-120 lg:w-xl lg:h-144 opacity-15 pointer-events-none select-none flex items-center justify-center">
-               <UserStar className="w-full h-full text-white" strokeWidth={1} />
+            {/* Background Watermark EmployeesOffice SVG from @esvigy/react */}
+            <div className="absolute -right-8 -bottom-12 sm:-right-12 sm:-bottom-16 md:-right-16 md:-bottom-20 lg:-right-12 lg:-bottom-16 w-72 h-72 sm:w-96 sm:h-96 md:w-120 md:h-120 lg:w-xl lg:h-144 opacity-20 pointer-events-none select-none">
+               <EmployeesOffice
+                  animated={true}
+                  color="#ffffff"
+                  secondaryColor="rgba(255,255,255,0.2)"
+                  className="w-full h-full"
+               />
             </div>
 
             {/* Foreground Details & Call to Action */}
@@ -151,7 +155,7 @@ export default function GovernancePage() {
                                     )}
                                     
                                     {/* Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                                    <div className="absolute inset-0 bg-linear-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
                                     
                                     {/* Overlay Details (Socials & Phone) */}
                                     <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 flex items-center gap-2.5">

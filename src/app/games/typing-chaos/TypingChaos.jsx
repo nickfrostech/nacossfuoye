@@ -94,7 +94,7 @@ function generateRound(previousSentence = '') {
    };
 }
 
-export default function TypingChaos({ onGameOver, player }) {
+export default function TypingChaos({ onGameOver }) {
    // Game State
    const [status, setStatus] = useState('idle'); // 'idle' | 'playing' | 'over'
    const [currentRound, setCurrentRound] = useState(() => generateRound());
@@ -394,7 +394,7 @@ export default function TypingChaos({ onGameOver, player }) {
                         <span className="text-slate-400 text-[10px]">Accuracy</span>
                      </div>
                      <div className="bg-white p-1.5 rounded-xl border border-slate-100 font-bold">
-                        <span className="block text-amber-600 text-sm font-black flex items-center justify-center gap-0.5">
+                        <span className="text-amber-600 text-sm font-black flex items-center justify-center gap-0.5">
                            {lastRunStats.maxStreak} <Flame size={12} className="fill-amber-500" />
                         </span>
                         <span className="text-slate-400 text-[10px]">Streak</span>

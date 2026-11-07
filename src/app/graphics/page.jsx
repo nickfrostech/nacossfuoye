@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import {
    ArrowRight,
-   Image as ImageIcon,
    Cake
 } from 'lucide-react';
+import { BalloonPackage } from '@esvigy/react';
 import BirthdayForm from '@/components/BirthdayForm';
 
 const AVAILABLE_GRAPHICS = [
@@ -34,11 +34,16 @@ export default function GraphicsPage() {
 
    return (
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-         {/* Graphics Studio Hero Section (solid bg-purple-700 with ImageIcon watermark) */}
+         {/* Graphics Studio Hero Section (solid bg-purple-700 with BalloonPackage watermark) */}
          <section className="relative overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-purple-700 p-6 sm:p-10 md:p-14 mb-10 text-white">
-            {/* Background Watermark ImageIcon SVG */}
-            <div className="absolute -right-8 -bottom-12 sm:-right-12 sm:-bottom-16 md:-right-16 md:-bottom-20 lg:-right-12 lg:-bottom-16 w-72 h-72 sm:w-96 sm:h-96 md:w-120 md:h-120 lg:w-xl lg:h-144 opacity-15 pointer-events-none select-none flex items-center justify-center">
-               <ImageIcon className="w-full h-full text-white" strokeWidth={1} />
+            {/* Background Watermark BalloonPackage SVG from @esvigy/react */}
+            <div className="absolute -right-8 -bottom-12 sm:-right-12 sm:-bottom-16 md:-right-16 md:-bottom-20 lg:-right-12 lg:-bottom-16 w-72 h-72 sm:w-96 sm:h-96 md:w-120 md:h-120 lg:w-xl lg:h-144 opacity-20 pointer-events-none select-none">
+               <BalloonPackage
+                  animated={true}
+                  color="#ffffff"
+                  secondaryColor="rgba(255,255,255,0.2)"
+                  className="w-full h-full"
+               />
             </div>
 
             {/* Foreground Details & Call to Action */}
