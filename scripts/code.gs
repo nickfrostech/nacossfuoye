@@ -29,8 +29,12 @@ const NOTIFICATION_EMAILS = [
    'caleborabe78@gmail.com',          // Software Director's email address
 ];
 
-// Secret key to protect 1-click email approval links from unauthorized clicks
-const APPROVAL_SECRET = 'NACOSS_FUOYE_EXEC_2026';
+// Retrieve approval secret securely from Google Apps Script Script Properties
+// To set this, go to: Apps Script Project Settings -> Script Properties -> Add 'APPROVAL_SECRET'
+// Or run the setupApprovalSecret() helper function below once in the Apps Script editor.
+function getApprovalSecret() {
+   return PropertiesService.getScriptProperties().getProperty('APPROVAL_SECRET') || '';
+}
 
 const SPREADSHEET = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -200,10 +204,11 @@ function doGet(e) {
       // A. 1-CLICK EMAIL APPROVAL / REJECTION HANDLER (With Student Auto-Reply)
       // ----------------------------------------------------------------------
       if (params.action === 'approve' || params.action === 'reject') {
-         if (params.key !== APPROVAL_SECRET) {
+         const expectedSecret = getApprovalSecret();
+         if (!expectedSecret || params.key !== expectedSecret) {
             return HtmlService.createHtmlOutput(renderStatusCard(
                'Unauthorized Request',
-               'The approval key provided is invalid or has expired.',
+               'The approval key provided is invalid, expired, or unconfigured in Script Properties.',
                '#ef4444',
                false
             ));
@@ -487,8 +492,9 @@ function sendSubmissionNotification(config, data, type, rowIndex) {
       }
 
       if (webAppUrl) {
-         const approveUrl = `${webAppUrl}?action=approve&type=product_showcase&row=${rowIndex}&key=${encodeURIComponent(APPROVAL_SECRET)}`;
-         const rejectUrl = `${webAppUrl}?action=reject&type=product_showcase&row=${rowIndex}&key=${encodeURIComponent(APPROVAL_SECRET)}`;
+         const secretKey = getApprovalSecret();
+         const approveUrl = `${webAppUrl}?action=approve&type=product_showcase&row=${rowIndex}&key=${encodeURIComponent(secretKey)}`;
+         const rejectUrl = `${webAppUrl}?action=reject&type=product_showcase&row=${rowIndex}&key=${encodeURIComponent(secretKey)}`;
 
          approvalBlockText = `\n1-CLICK EXECUTIVE APPROVAL:\n` +
             `• Approve & Publish to Portal: ${approveUrl}\n` +
@@ -700,3 +706,14 @@ function testNotificationEmail() {
    sendSubmissionNotification(config, sampleData, sampleData.type, rowIndex);
    Logger.log(`Test submission recorded in row #${rowIndex} of "${config.sheetName}". Notification email dispatched!`);
 }
+
+/**
+ * Quick setup helper: Run this once in the Apps Script editor to securely generate
+ * and save your approval secret in Google Script Properties:
+ */
+function setupApprovalSecret() {
+   const secureToken = Utilities.getUuid();
+   PropertiesService.getScriptProperties().setProperty('APPROVAL_SECRET', secureToken);
+   Logger.log('Secure APPROVAL_SECRET generated and saved to Script Properties: ' + secureToken);
+}
+
