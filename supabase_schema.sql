@@ -148,3 +148,59 @@ CREATE TABLE public.game_scores (
   created_at timestamp with time zone null default now(),
   constraint game_scores_pkey primary key (id)
 ) TABLESPACE pg_default;
+
+-- 6. Events Table
+CREATE TABLE IF NOT EXISTS public.events (
+  id uuid not null default gen_random_uuid(),
+  created_at timestamp with time zone not null default now(),
+  title text not null,
+  description text not null default '',
+  date text not null,
+  time text not null default '',
+  venue text not null default '',
+  type text not null default 'Event',
+  status text not null default 'Upcoming',
+  badge_color text null default 'bg-emerald-50 text-emerald-800 border-emerald-200/60',
+  is_published boolean not null default true,
+  created_by text null,
+  constraint events_pkey primary key (id)
+) TABLESPACE pg_default;
+
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view published events" ON public.events 
+FOR SELECT USING (is_published = true);
+
+CREATE POLICY "Executives can manage events" ON public.events 
+FOR ALL TO authenticated USING (
+  public.get_user_role() NOT IN ('src', 'elecom') AND public.get_user_role() IS NOT NULL
+);
+
+-- 7. Hackathons Table
+CREATE TABLE IF NOT EXISTS public.hackathons (
+  id uuid not null default gen_random_uuid(),
+  created_at timestamp with time zone not null default now(),
+  title text not null,
+  organizer text not null,
+  description text not null default '',
+  deadline text not null,
+  prize text not null default '',
+  mode text not null default 'Physical (on campus)',
+  tags text[] not null default '{}',
+  apply_url text not null,
+  featured boolean not null default false,
+  is_published boolean not null default true,
+  created_by text null,
+  constraint hackathons_pkey primary key (id)
+) TABLESPACE pg_default;
+
+ALTER TABLE public.hackathons ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view published hackathons" ON public.hackathons 
+FOR SELECT USING (is_published = true);
+
+CREATE POLICY "Executives can manage hackathons" ON public.hackathons 
+FOR ALL TO authenticated USING (
+  public.get_user_role() NOT IN ('src', 'elecom') AND public.get_user_role() IS NOT NULL
+);
+

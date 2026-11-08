@@ -67,14 +67,77 @@ VALUES
 ('2026-10-01', 'Bank Account Opening Balance', 500000.00, 0, 500000.00, 'Opening', 'treasurer@nacoss.local'),
 ('2026-10-04', 'Departmental Grant', 200000.00, 0, 700000.00, 'Grant', 'treasurer@nacoss.local');
 
--- ==========================================
--- IMPORTANT NOTE FOR CONTRIBUTORS:
--- To test the Admin Dashboard, you must manually create a user in your Supabase Auth,
--- then insert their email into the `user_roles` table with the role 'admin'.
--- ==========================================
+-- 5. Insert Departmental Events
+INSERT INTO public.events (title, description, date, time, venue, type, status, badge_color, is_published, created_by)
+VALUES 
+(
+  'Fresher''s Technical Orientation',
+  'Onboarding of new students to the department.',
+  'Planning',
+  '10:00 AM - 1:00 PM',
+  'Planning',
+  'Event',
+  'Upcoming',
+  'bg-emerald-50 text-emerald-800 border-emerald-200/60',
+  true,
+  'pro@nacoss.local'
+),
+(
+  'Tech Symposium: AI Agents & Modern Web Systems',
+  'Keynote sessions with alumni software engineers and industry guest speakers discussing career transitions, internships, and cloud architectures.',
+  'NOV 28, 2026',
+  '11:00 AM - 3:30 PM',
+  'Planning',
+  'Symposium',
+  'Upcoming',
+  'bg-blue-50 text-blue-800 border-blue-200/60',
+  true,
+  'pro@nacoss.local'
+),
+(
+  'Git, GitHub & Open Source Contribution Sprint',
+  'Live interactive workshop teaching clean Git workflows, pull requests, resolving merge conflicts, and contributing to departmental open source repos.',
+  'DEC 05, 2026',
+  '2:00 PM - 5:00 PM',
+  'Virtual (Google Meet)',
+  'Hands-on Bootcamp',
+  'Upcoming',
+  'bg-purple-50 text-purple-800 border-purple-200/60',
+  true,
+  'pro@nacoss.local'
+);
 
+-- 6. Insert Curated Hackathons
+INSERT INTO public.hackathons (title, organizer, description, deadline, prize, mode, tags, apply_url, featured, is_published, created_by)
+VALUES
+(
+  'Hacktoberfest FUOYE',
+  'Google Developer Group',
+  'Whether you''re making your first GitHub pull request or you''re already contributing to open source, Hacktoberfest FUOYE is your chance to learn, build, and collaborate with developers across our community.',
+  'Apply by Oct 30, 2026',
+  'T-Shirts, Stickers, and Swag',
+  'Physical (on campus)',
+  ARRAY['frontend', 'backend', 'Mobile', 'design'],
+  'https://events.mlh.com/events/15228-hacktoberfest-fuoye-2026',
+  true,
+  true,
+  'pro@nacoss.local'
+),
+(
+  'Busha Business Build Challenge',
+  'Busha',
+  'Build with real financial infrastructure, learn from engineers, and win prizes.',
+  'Apply by Oct 29, 2026',
+  '2,250,000 NGN Total Bounties',
+  'Physical (Busha Office)',
+  ARRAY['Web3', 'Fintech', 'payment'],
+  'https://hackathon.busha.io/',
+  true,
+  true,
+  'pro@nacoss.local'
+);
 
--- Game Scores Seed
+-- 7. Game Scores Seed
 INSERT INTO public.game_scores (game_slug, gaming_name, level, score)
 VALUES
   ('memory-match', 'Shadow', '400L', 980),
@@ -87,3 +150,9 @@ VALUES
   ('memory-match', 'Morpheus', '500L', 790),
   ('memory-match', 'Smith', 'Alumni', 750),
   ('memory-match', 'Cypher', '200L', 700);
+
+-- ==========================================
+-- IMPORTANT NOTE FOR CONTRIBUTORS:
+-- To test the Admin Dashboard, you must manually create a user in your Supabase Auth,
+-- then insert their email into the `user_roles` table with the role 'admin'.
+-- ==========================================
