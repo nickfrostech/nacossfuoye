@@ -53,16 +53,16 @@ export default function BuildLabPage() {
             if (isMounted && json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
                const liveProjects = json.data.map((item, idx) => ({
                   id: item.id || `live-${idx}`,
-                  title: item.title || item.projectProductTitle || 'Student Product',
-                  desc: item.desc || item.projectDescription || '',
+                  title: item.title || item.projectTitle || item.projectProductTitle || 'Student Product',
+                  desc: item.desc || item.description || item.projectDescription || '',
                   category: item.category || 'Web App',
                   author: item.fullName || item.author || 'Student Developer',
                   level: item.level || item.academicLevel || 'Undergraduate',
                   tech: Array.isArray(item.tech)
                      ? item.tech
                      : (typeof item.tech === 'string' && item.tech ? item.tech.split(',').map((s) => s.trim()) : ['Live App']),
-                  demoUrl: item.demoUrl || item.liveDemoUrl || '',
-                  githubUrl: item.githubUrl || item.gitHubRepository || '',
+                  demoUrl: item.demoUrl || item.demoURL || item.liveDemoUrl || '',
+                  githubUrl: item.githubUrl || item.gitHubUrl || item.gitHubURL || item.gitHubRepository || '',
                   featured: Boolean(item.featured),
                }));
 
