@@ -48,6 +48,7 @@ export default function AcademicsPage() {
    // Software Request Form State (to be wired to Google Apps Script)
    const [formData, setFormData] = useState({
       fullName: '',
+      email: '',
       matricNo: '',
       level: '100 Level',
       softwareName: '',
@@ -99,6 +100,7 @@ export default function AcademicsPage() {
    const resetForm = () => {
       setFormData({
          fullName: '',
+         email: '',
          matricNo: '',
          level: '100 Level',
          softwareName: '',
@@ -518,21 +520,39 @@ export default function AcademicsPage() {
                            </div>
                         </div>
 
-                        {/* Phone / WhatsApp Number */}
-                        <div className="space-y-1.5">
-                           <label htmlFor="phone" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                              Phone or WhatsApp Number <span className="text-red-500">*</span>
-                           </label>
-                           <input
-                              id="phone"
-                              name="phone"
-                              type="tel"
-                              required
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                              placeholder="e.g. 08123456789 (for pickup notification)"
-                              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
-                           />
+                        {/* Email & Phone / WhatsApp Number */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           <div className="space-y-1.5">
+                              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                 Email Address <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                 id="email"
+                                 name="email"
+                                 type="email"
+                                 required
+                                 value={formData.email}
+                                 onChange={handleInputChange}
+                                 placeholder="e.g. student@gmail.com"
+                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
+                              />
+                           </div>
+
+                           <div className="space-y-1.5">
+                              <label htmlFor="phone" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                 Phone or WhatsApp Number <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                 id="phone"
+                                 name="phone"
+                                 type="tel"
+                                 required
+                                 value={formData.phone}
+                                 onChange={handleInputChange}
+                                 placeholder="e.g. 08123456789"
+                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
+                              />
+                           </div>
                         </div>
 
                         {/* Additional Notes */}

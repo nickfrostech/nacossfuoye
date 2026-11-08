@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
    ArrowRight,
@@ -29,8 +29,10 @@ export default function BuildLabPage() {
    const [submitStatus, setSubmitStatus] = useState(null); // null | 'success' | 'error'
    const [submitMessage, setSubmitMessage] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
+   const [showcaseProjects, setShowcaseProjects] = useState(SHOWCASE_PROJECTS);
    const [formData, setFormData] = useState({
       fullName: '',
+      email: '',
       level: '100',
       title: '',
       demoUrl: '',
@@ -39,9 +41,49 @@ export default function BuildLabPage() {
       desc: '',
    });
 
+   useEffect(() => {
+      const scriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+      if (!scriptUrl) return;
+
+      let isMounted = true;
+      async function fetchApprovedProjects() {
+         try {
+            const res = await fetch(`${scriptUrl}?sheet=ProductShowcase`);
+            const json = await res.json();
+            if (isMounted && json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
+               const liveProjects = json.data.map((item, idx) => ({
+                  id: item.id || `live-${idx}`,
+                  title: item.title || item.projectProductTitle || 'Student Product',
+                  desc: item.desc || item.projectDescription || '',
+                  category: item.category || 'Web App',
+                  author: item.fullName || item.author || 'Student Developer',
+                  level: item.level || item.academicLevel || 'Undergraduate',
+                  tech: Array.isArray(item.tech)
+                     ? item.tech
+                     : (typeof item.tech === 'string' && item.tech ? item.tech.split(',').map((s) => s.trim()) : ['Live App']),
+                  demoUrl: item.demoUrl || item.liveDemoUrl || '',
+                  githubUrl: item.githubUrl || item.gitHubRepository || '',
+                  featured: Boolean(item.featured),
+               }));
+
+               setShowcaseProjects((prev) => {
+                  const liveTitles = new Set(liveProjects.map((p) => p.title.toLowerCase().trim()));
+                  const remainingDefaults = prev.filter((p) => !liveTitles.has(p.title.toLowerCase().trim()));
+                  return [...liveProjects, ...remainingDefaults];
+               });
+            }
+         } catch (err) {
+            console.log('Using static fallback for showcase projects:', err);
+         }
+      }
+
+      fetchApprovedProjects();
+      return () => { isMounted = false; };
+   }, []);
+
    const filteredProjects = selectedCategory === 'All'
-      ? SHOWCASE_PROJECTS
-      : SHOWCASE_PROJECTS.filter((p) => p.category === selectedCategory);
+      ? showcaseProjects
+      : showcaseProjects.filter((p) => p.category === selectedCategory);
 
    const handleInputChange = (e) => {
       const { name, value } = e.target;
@@ -77,6 +119,7 @@ export default function BuildLabPage() {
          setSubmitMessage('Submission received! The Technical Directorate will review and reach out to you shortly.');
          setFormData({
             fullName: '',
+            email: '',
             level: '100',
             title: '',
             demoUrl: '',
@@ -171,7 +214,7 @@ export default function BuildLabPage() {
                   >
                      <Rocket size={15} className="shrink-0" />
                      <span className="sm:hidden">Showcase</span>
-                     <span className="hidden sm:inline">Student Showcase ({SHOWCASE_PROJECTS.length})</span>
+                     <span className="hidden sm:inline">Student Showcase ({showcaseProjects.length})</span>
                   </button>
 
                   <button
@@ -255,7 +298,7 @@ export default function BuildLabPage() {
 
                            {/* Tech Stack Badges */}
                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                              {project.tech.map((t) => (
+                              {(Array.isArray(project.tech) ? project.tech : []).map((t) => (
                                  <span key={t} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
                                     {t}
                                  </span>
@@ -535,19 +578,37 @@ export default function BuildLabPage() {
                         </div>
                      )}
 
-                     <div>
-                        <label htmlFor="submitter-phone" className="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp / Phone Number</label>
-                        <input
-                           id="submitter-phone"
-                           name="phone"
-                           type="tel"
-                           required
-                           value={formData.phone}
-                           onChange={handleInputChange}
-                           aria-label="WhatsApp or Phone Number"
-                           placeholder="e.g. 08123456789"
-                           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-teal-600"
-                        />
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                           <label htmlFor="submitter-email" className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                              Your Email Address <span className="text-teal-600 font-normal">(for approval notice)</span>
+                           </label>
+                           <input
+                              id="submitter-email"
+                              name="email"
+                              type="email"
+                              required
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              aria-label="Your Email Address"
+                              placeholder="e.g. yourname@gmail.com"
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-teal-600"
+                           />
+                        </div>
+                        <div>
+                           <label htmlFor="submitter-phone" className="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp / Phone Number</label>
+                           <input
+                              id="submitter-phone"
+                              name="phone"
+                              type="tel"
+                              required
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              aria-label="WhatsApp or Phone Number"
+                              placeholder="e.g. 08123456789"
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-teal-600"
+                           />
+                        </div>
                      </div>
 
                      <div>
