@@ -70,7 +70,7 @@ const getActiveUser = async (supabase) => {
    }
 };
 
-export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, type = 'executive' }, ref) => {
+export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, type = 'executive', onSuccess }, ref) => {
    const [isAdding, setIsAdding] = useState(false);
    const [notification, setNotification] = useState(null);
    const supabase = createClient();
@@ -129,6 +129,32 @@ export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, ty
 
          if (error) {
             if (error.code === '23505') {
+               // Check if the memo was already created and can be updated
+               const { error: updateError } = await supabase
+                  .from('memo')
+                  .update({
+                     date: date,
+                     head: head,
+                     content: content,
+                     type: type,
+                     last_edited_by: user?.email,
+                  })
+                  .eq('reference', referenceNumber);
+
+               if (!updateError) {
+                  // Clean up draft
+                  if (typeof window !== 'undefined') {
+                     try {
+                        localStorage.removeItem(`nacoss_memo_draft_${type}`);
+                     } catch (e) {
+                        console.warn('Could not clear local draft:', e);
+                     }
+                  }
+                  showNotification('Memo updated successfully!', 'success');
+                  if (onSuccess) onSuccess(referenceNumber);
+                  return true;
+               }
+
                showNotification('Reference number already exists.', 'error');
                return false;
             } else if (error.code === '42501') {
@@ -150,6 +176,7 @@ export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, ty
          }
 
          showNotification('Published successfully!', 'success');
+         if (onSuccess) onSuccess(referenceNumber);
          return true;
       } catch (error) {
          console.error('Publish error:', error);
@@ -175,7 +202,7 @@ export const AddNewMemo = forwardRef(({ referenceNumber, date, head, content, ty
    );
 });
 
-export const UpdateMemo = forwardRef(({ referenceNumber, date, head, content, type = 'executive' }, ref) => {
+export const UpdateMemo = forwardRef(({ referenceNumber, date, head, content, type = 'executive', onSuccess }, ref) => {
    const [isAdding, setIsAdding] = useState(false);
    const [notification, setNotification] = useState(null);
    const supabase = createClient();
@@ -233,6 +260,7 @@ export const UpdateMemo = forwardRef(({ referenceNumber, date, head, content, ty
          }
 
          showNotification('Updated successfully!', 'success');
+         if (onSuccess) onSuccess(referenceNumber);
          return true;
       } catch (error) {
          console.error('Update error:', error);

@@ -18,6 +18,14 @@ const PREFIX_MAP = {
 };
 
 export default function MemoForm({ isNew = true, initialData = {}, memoType = 'executive' }) {
+   const [isNewMemo, setIsNewMemo] = useState(isNew);
+   const [isSaved, setIsSaved] = useState(!isNew);
+   const lastSavedRef = useRef({
+      date: initialData.date || '',
+      content: initialData.content || '',
+      reference: initialData.reference || '',
+   });
+
    const [date, setDate] = useState(() => {
       if (initialData.date) return initialData.date;
       if (isNew && typeof window !== 'undefined') {
@@ -145,7 +153,34 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
 
    useScale({ letterHeadRef, previewRef });
 
+   const handlePublishSuccess = (refNum) => {
+      setIsNewMemo(false);
+      setIsSaved(true);
+      lastSavedRef.current = {
+         date,
+         content,
+         reference: refNum || referenceNumber,
+      };
+      if (typeof window !== 'undefined' && refNum) {
+         window.history.replaceState(null, '', `/admin/edit/${encodeURIComponent(refNum)}`);
+      }
+   };
+
+   const handleUpdateSuccess = (refNum) => {
+      setIsSaved(true);
+      lastSavedRef.current = {
+         date,
+         content,
+         reference: refNum || referenceNumber,
+      };
+   };
+
    const handleBeforeDownload = async () => {
+      // If the memo has already been published/saved and there are no unsaved changes,
+      // allow download immediately without re-publishing or prompting!
+      if (isSaved) {
+         return true;
+      }
       if (publishRef.current) {
          return await publishRef.current.publish();
       }
@@ -155,14 +190,14 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
    return (
       <div className="relative pt-4 sm:pt-6">
          <PageHeader
-            title={isNew ? 'Create New Memo' : 'Edit Memo'}
+            title={isNewMemo ? 'Create New Memo' : 'Edit Memo'}
          >
             <div className="relative z-10 flex flex-wrap items-center gap-2 sm:gap-3">
                <DownloadBtn elementRef={letterHeadRef} referenceNumber={referenceNumber || 'draft'} onBeforeDownload={handleBeforeDownload} />
-               {isNew ? (
-                  <AddNewMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={derivedHead} content={content} type={memoType} />
+               {isNewMemo ? (
+                  <AddNewMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={derivedHead} content={content} type={memoType} onSuccess={handlePublishSuccess} />
                ) : (
-                  <UpdateMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={derivedHead} content={content} type={memoType} />
+                  <UpdateMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={derivedHead} content={content} type={memoType} onSuccess={handleUpdateSuccess} />
                )}
             </div>
          </PageHeader>
@@ -182,7 +217,10 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                         type="date"
                         id="dateInput"
                         value={date}
-                        onChange={e => setDate(e.target.value)}
+                        onChange={e => {
+                           setDate(e.target.value);
+                           setIsSaved(false);
+                        }}
                         className="w-full px-4 py-3 rounded-xl border border-primary/70 focus:border-primary  outline-none transition-all duration-300 text-slate-900 bg-white/90 focus:bg-white backdrop-blur-sm"
                      />
                   </div>
@@ -193,10 +231,13 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                         type="text"
                         id="refInput"
                         value={referenceNumber}
-                        onChange={e => setReferenceNumber(e.target.value)}
+                        onChange={e => {
+                           setReferenceNumber(e.target.value);
+                           setIsSaved(false);
+                        }}
                         placeholder={`${PREFIX_MAP[memoType] || 'NACOSS'}/25/...`}
-                        disabled={!isNew}
-                        className={`w-full px-4 py-3 rounded-xl border outline-none transition-all duration-300 text-slate-900 backdrop-blur-sm ${!isNew ? 'bg-white/50 border-white/10 cursor-not-allowed opacity-80' : 'border-primary/70 focus:border-primary  bg-white/90 focus:bg-white'}`}
+                        disabled={!isNewMemo}
+                        className={`w-full px-4 py-3 rounded-xl border outline-none transition-all duration-300 text-slate-900 backdrop-blur-sm ${!isNewMemo ? 'bg-white/50 border-white/10 cursor-not-allowed opacity-80' : 'border-primary/70 focus:border-primary  bg-white/90 focus:bg-white'}`}
                      />
                   </div>
 
@@ -205,7 +246,14 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                      <div>
                         <label htmlFor="quill-editor" className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Memo Content</label>
                         <div className="rounded-xl bg-white/90 backdrop-blur-sm transition-all duration-300">
-                           <SimpleEditor setContent={setContent} content={content} mode="split" />
+                           <SimpleEditor
+                              setContent={(val) => {
+                                 setContent(val);
+                                 setIsSaved(false);
+                              }}
+                              content={content}
+                              mode="split"
+                           />
                         </div>
                      </div>
                   )}
@@ -222,7 +270,10 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                      content={content}
                      letterHeadRef={letterHeadRef}
                      viewMode={viewMode}
-                     setContent={setContent}
+                     setContent={(val) => {
+                        setContent(val);
+                        setIsSaved(false);
+                     }}
                      type={memoType}
                      toolbarPortalRef={toolbarPortalRef}
                   />
