@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
-import { ArrowRight, Quote, Shield } from 'lucide-react';
-import { Announcement, BalloonPackage, PaymentReceipt, Wallet } from '@esvigy/react';
+import { ArrowRight, Quote, Shield, Calendar, Trophy } from 'lucide-react';
+import { Announcement, BalloonPackage, PaymentReceipt, Wallet, GroupBrainstorming } from '@esvigy/react';
 import { createClient } from '@/utils/supabase/client';
 
 const CATEGORIES = [
@@ -103,6 +103,7 @@ export default function AdminDashBoardHub() {
    const canViewLedger = ['admin', 'president', 'fin_sec'].includes(userRole);
    const canViewTreasurer = ['admin', 'president', 'treasurer', 'gen_sec', 'ags', 'pro', 'vp'].includes(userRole);
    const canViewTemplates = userRole && !['src', 'elecom'].includes(userRole);
+   const canManageEvents = Boolean(userRole && !['src', 'elecom'].includes(userRole));
 
    return (
       <div className="animate-in fade-in duration-500">
@@ -232,6 +233,50 @@ export default function AdminDashBoardHub() {
                         </div>
                      </Link>
                   )}
+               </div>
+            </section>
+         )}
+
+         {/* Events & Hackathons Section */}
+         {canManageEvents && (
+            <section id="events" className="scroll-mt-28">
+               <div className="mt-12 mb-4">
+                  <h2 className="text-xl font-bold text-slate-800">Events &amp; Competitions</h2>
+                  <p className="text-sm text-slate-500 mt-1">Manage departmental symposiums, workshops, and student hackathons.</p>
+               </div>
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  <Link
+                     href="/admin/events"
+                     className="relative group h-full flex flex-col p-6 rounded-2xl overflow-hidden border border-white/20 transition-[transform] duration-300 ease-out active:scale-[0.98] bg-amber-700/95 text-white backdrop-blur-md"
+                  >
+                     <div className="absolute -bottom-8 -right-8 opacity-15 transition-transform duration-500 group-hover:scale-110 pointer-events-none">
+                        <GroupBrainstorming animated={true} color="#ffffff" secondaryColor="rgba(255,255,255,0.2)" className="w-48 h-48" />
+                     </div>
+
+                     <div className="relative z-10 flex flex-col h-full">
+                        <div className="flex items-start justify-between mb-4">
+                           <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-1 text-xs text-white backdrop-blur-sm border border-white/10 font-medium uppercase tracking-wider">
+                              Public Board
+                           </span>
+                        </div>
+
+                        <div className="flex flex-col flex-1 py-2">
+                           <h3 className="text-xl font-bold text-white leading-snug mb-2">
+                              Events &amp; Hackathon Arena
+                           </h3>
+                           <p className="text-white/80 text-sm font-medium leading-relaxed">
+                              Create, edit, toggle publish status, and delete departmental events and external hackathons.
+                           </p>
+                        </div>
+
+                        <div className="mt-auto flex justify-between items-center border-t border-white/20 pt-4">
+                           <div className="flex items-center text-sm font-semibold text-white opacity-90 group-hover:opacity-100 transition-opacity">
+                              Manage Board <ArrowRight size={16} className="ml-1 transition-transform group-hover:translate-x-1 duration-300 ease-out" />
+                           </div>
+                        </div>
+                     </div>
+                  </Link>
                </div>
             </section>
          )}

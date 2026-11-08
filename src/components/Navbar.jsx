@@ -25,7 +25,8 @@ import {
    CheckCircle2,
    GraduationCap,
    LogOut,
-   Wallet
+   Wallet,
+   Calendar
 } from 'lucide-react';
 
 const REPO_URL = 'https://github.com/nickfrostech/nacossfuoye';
@@ -47,6 +48,16 @@ const getAdminSectionNavItems = (userRole) => {
    const canViewLedger = ['admin', 'president', 'fin_sec'].includes(userRole);
    const canViewTreasurer = ['admin', 'president', 'treasurer', 'gen_sec', 'ags', 'pro', 'vp'].includes(userRole);
    const canViewTemplates = !['src', 'elecom'].includes(userRole);
+   const canManageEvents = !['src', 'elecom'].includes(userRole);
+
+   if (canManageEvents) {
+      items.push({
+         id: 'events',
+         title: 'Events',
+         icon: Calendar,
+         color: 'text-amber-700 bg-amber-50 border-amber-200/60',
+      });
+   }
 
    if (canViewLedger || canViewTreasurer) {
       items.push({
