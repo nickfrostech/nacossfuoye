@@ -7,8 +7,8 @@ import DownloadBtn from '@/components/DownloadBtn';
 import useScale from '@/hooks/useScale';
 import PageHeader from '@/components/PageHeader';
 import { AddNewMemo, UpdateMemo } from '@/components/PublishBtn';
-
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
+import { History, RotateCcw, Trash2 } from 'lucide-react';
 
 const PREFIX_MAP = {
    executive: 'NACOSS',
@@ -20,46 +20,19 @@ const PREFIX_MAP = {
 export default function MemoForm({ isNew = true, initialData = {}, memoType = 'executive' }) {
    const [isNewMemo, setIsNewMemo] = useState(isNew);
    const [isSaved, setIsSaved] = useState(!isNew);
+   const [pendingDraft, setPendingDraft] = useState(null);
    const lastSavedRef = useRef({
       date: initialData.date || '',
       content: initialData.content || '',
       reference: initialData.reference || '',
    });
 
-   const [date, setDate] = useState(() => {
-      if (initialData.date) return initialData.date;
-      if (isNew && typeof window !== 'undefined') {
-         try {
-            const savedDraft = localStorage.getItem(`nacoss_memo_draft_${memoType}`);
-            if (savedDraft) {
-               const parsed = JSON.parse(savedDraft);
-               if (parsed.date) return parsed.date;
-            }
-         } catch (e) {
-            console.warn('Could not read memo draft date:', e);
-         }
-      }
-      return '';
-   });
-
+   const [date, setDate] = useState(initialData.date || '');
    const [referenceNumber, setReferenceNumber] = useState(initialData.reference || '');
    const supabase = createClient();
 
    const [content, setContent] = useState(() => {
       let initContent = initialData.content || '';
-      if (!initContent && isNew && typeof window !== 'undefined') {
-         try {
-            const savedDraft = localStorage.getItem(`nacoss_memo_draft_${memoType}`);
-            if (savedDraft) {
-               const parsed = JSON.parse(savedDraft);
-               if (parsed.content) {
-                  initContent = parsed.content;
-               }
-            }
-         } catch (e) {
-            console.warn('Could not read memo draft content:', e);
-         }
-      }
       if (initialData.head && initContent && !initContent.includes(initialData.head)) {
          initContent = `<h1>${initialData.head}</h1>${initContent}`;
       } else if (initialData.head && !initContent) {
@@ -67,6 +40,48 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       }
       return initContent;
    });
+
+   // Check for unsaved draft on initial load
+   useEffect(() => {
+      if (!isNew || typeof window === 'undefined') return;
+      try {
+         const savedDraft = localStorage.getItem(`nacoss_memo_draft_${memoType}`);
+         if (savedDraft) {
+            const parsed = JSON.parse(savedDraft);
+            const hasContent = parsed.content && parsed.content.trim() !== '' && parsed.content.trim() !== '<p></p>';
+            const hasDate = Boolean(parsed.date);
+            if (hasContent || hasDate) {
+               setPendingDraft(parsed);
+            }
+         }
+      } catch (e) {
+         console.warn('Could not read memo draft:', e);
+      }
+   }, [isNew, memoType]);
+
+   const handleRestoreDraft = () => {
+      if (pendingDraft) {
+         if (pendingDraft.date) {
+            setDate(pendingDraft.date);
+         }
+         if (pendingDraft.content) {
+            setContent(pendingDraft.content);
+         }
+         setIsSaved(false);
+      }
+      setPendingDraft(null);
+   };
+
+   const handleDiscardDraft = () => {
+      if (typeof window !== 'undefined') {
+         try {
+            localStorage.removeItem(`nacoss_memo_draft_${memoType}`);
+         } catch (e) {
+            console.warn('Could not clear local draft:', e);
+         }
+      }
+      setPendingDraft(null);
+   };
 
    const getDerivedHead = () => {
       if (typeof window === 'undefined') return initialData.head || "Untitled Memo";
@@ -134,6 +149,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
    // Auto-save draft to local storage so user content is never lost if session expires or page refreshes
    useEffect(() => {
       if (!isNew || typeof window === 'undefined') return;
+      if (pendingDraft) return; // Don't overwrite pending draft until user restores or discards
       if (!content && !date) return;
 
       const timer = setTimeout(() => {
@@ -149,11 +165,19 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       }, 500);
 
       return () => clearTimeout(timer);
-   }, [isNew, memoType, date, content]);
+   }, [isNew, memoType, date, content, pendingDraft]);
 
    useScale({ letterHeadRef, previewRef });
 
    const handlePublishSuccess = (refNum) => {
+      if (typeof window !== 'undefined') {
+         try {
+            localStorage.removeItem(`nacoss_memo_draft_${memoType}`);
+         } catch (e) {
+            console.warn('Could not clear local draft on publish:', e);
+         }
+      }
+      setPendingDraft(null);
       setIsNewMemo(false);
       setIsSaved(true);
       lastSavedRef.current = {
@@ -187,6 +211,16 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       return true;
    };
 
+   const formattedDraftTime = pendingDraft?.savedAt
+      ? new Date(pendingDraft.savedAt).toLocaleString(undefined, {
+           month: 'short',
+           day: 'numeric',
+           hour: 'numeric',
+           minute: '2-digit',
+           hour12: true,
+        })
+      : null;
+
    return (
       <div className="relative pt-4 sm:pt-6">
          <PageHeader
@@ -201,6 +235,42 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                )}
             </div>
          </PageHeader>
+
+         {pendingDraft && (
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-amber-200/80 bg-amber-50/90 text-amber-950 shadow-sm backdrop-blur-sm transition-all">
+               <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-100 text-amber-800 shrink-0">
+                     <History className="w-5 h-5" />
+                  </div>
+                  <div>
+                     <p className="font-semibold text-sm text-amber-900">Unsaved draft found</p>
+                     <p className="text-xs text-amber-700/90">
+                        {formattedDraftTime
+                           ? `You have an unsaved memo draft from ${formattedDraftTime}. Would you like to restore it?`
+                           : 'You have an unsaved memo draft from a previous session. Would you like to restore it?'}
+                     </p>
+                  </div>
+               </div>
+               <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  <button
+                     type="button"
+                     onClick={handleRestoreDraft}
+                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl bg-amber-600 text-white hover:bg-amber-700 active:scale-95 transition shadow-xs cursor-pointer"
+                  >
+                     <RotateCcw className="w-3.5 h-3.5" />
+                     Restore Draft
+                  </button>
+                  <button
+                     type="button"
+                     onClick={handleDiscardDraft}
+                     className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-amber-300/80 bg-white text-amber-900 hover:bg-amber-100 active:scale-95 transition cursor-pointer"
+                  >
+                     <Trash2 className="w-3.5 h-3.5 text-amber-700" />
+                     Discard
+                  </button>
+               </div>
+            </div>
+         )}
 
          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 items-start">
             {/* Form Section */}
