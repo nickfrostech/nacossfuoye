@@ -10,7 +10,7 @@ const MEMO_CONFIGS = {
       dateClass: 'absolute text-[12pt] text-black font-raleway font-extrabold text-left',
       dateStyle: { top: '183px', left: '605px' },
       contentClass: 'absolute font-medium text-[14pt] w-[85%] text-left -translate-x-1/2 text-black leading-tight',
-      contentStyle: { top: '245px', left: '50%' }
+      contentStyle: { top: '230px', left: '50%' }
    },
    src: {
       background: '/letterheads/src_letter_head.svg',
