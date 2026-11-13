@@ -36,3 +36,6 @@ dist-ssr
 
 #keep
 !.env.example
+
+# Local notes & roadmaps
+FUTURE_IMPROVEMENTS.md
