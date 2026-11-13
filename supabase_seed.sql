@@ -151,6 +151,60 @@ VALUES
   ('memory-match', 'Smith', 'Alumni', 750),
   ('memory-match', 'Cypher', '200L', 700);
 
+-- 8. Insert Activity Journal Entries (Tenure Stewardship Records)
+INSERT INTO public.event_journal (title, category, offices, date, attendance, semester, details, created_by)
+VALUES
+(
+  'Python for Beginners & Data Structures Clinic',
+  'Tutorial',
+  ARRAY['Academic Committee', 'Technical Committee'],
+  '2026-10-12',
+  120,
+  'First Semester',
+  'Comprehensive 3-day hands-on tutorial covering basic syntax, control structures, and essential data structures for 100L and 200L students.',
+  'academic@nacoss.local'
+),
+(
+  'Inter-Level Dean''s Football Championship & Indoor Games',
+  'Sports',
+  ARRAY['Director of Sports', 'Director of Socials'],
+  '2026-10-18',
+  250,
+  'First Semester',
+  'Annual football tournament fostering camaraderie across all academic levels. Jointly coordinated with Socials for half-time entertainment.',
+  'sports@nacoss.local'
+),
+(
+  'Modern Git, GitHub & Open Source Collaboration Workshop',
+  'Workshop',
+  ARRAY['Technical Committee'],
+  '2026-10-25',
+  95,
+  'First Semester',
+  'Practical session teaching version control, branch management, pull requests, and setting up open-source contributions.',
+  'tech@nacoss.local'
+),
+(
+  'Exam Relief Welfare Outreach & Mental Wellness Check-in',
+  'Welfare',
+  ARRAY['Welfare Director'],
+  '2026-11-02',
+  180,
+  'First Semester',
+  'Distribution of refreshment packs and study stationery to computing students during intensive midterm preparation.',
+  'welfare@nacoss.local'
+),
+(
+  'Tech Career Pathways & CV/Portfolio Review Seminar',
+  'Seminar',
+  ARRAY['Vice President', 'Academic Committee'],
+  '2026-11-08',
+  140,
+  'First Semester',
+  'Invited 3 industry guest software engineers to review student CVs and discuss internship applications and interview tips.',
+  'vp@nacoss.local'
+);
+
 -- ==========================================
 -- IMPORTANT NOTE FOR CONTRIBUTORS:
 -- To test the Admin Dashboard, you must manually create a user in your Supabase Auth,

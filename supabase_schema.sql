@@ -204,3 +204,49 @@ FOR ALL TO authenticated USING (
   public.get_user_role() NOT IN ('src', 'elecom') AND public.get_user_role() IS NOT NULL
 );
 
+-- 8. Event / Activity Journal Table (Tenure Stewardship Records)
+CREATE TABLE IF NOT EXISTS public.event_journal (
+  id uuid not null default gen_random_uuid(),
+  created_at timestamp with time zone not null default now(),
+  title text not null,
+  category text not null default 'Tutorial',
+  offices text[] not null default array[]::text[],
+  office text null,
+  date text not null,
+  attendance integer null default 0,
+  semester text not null default 'First Semester',
+  details text not null default '',
+  created_by text null,
+  constraint event_journal_pkey primary key (id)
+) TABLESPACE pg_default;
+
+-- Auto-migrate if table was previously created with single 'office' column
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'event_journal' AND column_name = 'offices'
+  ) THEN
+    ALTER TABLE public.event_journal ADD COLUMN offices text[] not null default array[]::text[];
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_name = 'event_journal' AND column_name = 'office'
+    ) THEN
+      UPDATE public.event_journal SET offices = ARRAY[office] WHERE offices = '{}' AND office IS NOT NULL;
+    END IF;
+  END IF;
+END $$;
+
+ALTER TABLE public.event_journal ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Authenticated executives can view event journal" ON public.event_journal 
+FOR SELECT TO authenticated USING (
+  public.get_user_role() NOT IN ('src', 'elecom') AND public.get_user_role() IS NOT NULL
+);
+
+CREATE POLICY "Authenticated executives can manage event journal" ON public.event_journal 
+FOR ALL TO authenticated USING (
+  public.get_user_role() NOT IN ('src', 'elecom') AND public.get_user_role() IS NOT NULL
+);
+
+
