@@ -157,7 +157,7 @@ VALUES
 (
   'Python for Beginners & Data Structures Clinic',
   'Tutorial',
-  ARRAY['Academic Committee', 'Technical Committee'],
+  ARRAY['President', 'Academic Committee', 'Technical Committee'],
   '2026-10-12',
   120,
   'First Semester',
@@ -167,7 +167,7 @@ VALUES
 (
   'Inter-Level Dean''s Football Championship & Indoor Games',
   'Sports',
-  ARRAY['Director of Sports', 'Director of Socials'],
+  ARRAY['President', 'Sports Director', 'Social Director'],
   '2026-10-18',
   250,
   'First Semester',
@@ -177,7 +177,7 @@ VALUES
 (
   'Modern Git, GitHub & Open Source Collaboration Workshop',
   'Workshop',
-  ARRAY['Technical Committee'],
+  ARRAY['President', 'Technical Committee', 'Software Director'],
   '2026-10-25',
   95,
   'First Semester',
@@ -187,7 +187,7 @@ VALUES
 (
   'Exam Relief Welfare Outreach & Mental Wellness Check-in',
   'Welfare',
-  ARRAY['Welfare Director'],
+  ARRAY['President', 'Welfare Director'],
   '2026-11-02',
   180,
   'First Semester',
@@ -197,7 +197,7 @@ VALUES
 (
   'Tech Career Pathways & CV/Portfolio Review Seminar',
   'Seminar',
-  ARRAY['Vice President', 'Academic Committee'],
+  ARRAY['President', 'Vice President', 'Academic Committee'],
   '2026-11-08',
   140,
   'First Semester',

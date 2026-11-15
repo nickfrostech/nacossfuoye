@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import PageHeader from '@/components/PageHeader';
 import {
-   Calendar,
    Plus,
    Edit3,
    Trash2,
@@ -27,9 +26,11 @@ const EXECUTIVE_OFFICES = [
    'Financial Secretary',
    'Treasurer',
    'Public Relations Officer (PRO)',
-   'Director of Socials',
-   'Director of Sports',
+   'Social Director',
+   'Sports Director',
+   'Software Director',
    'Welfare Director',
+   'Librarian',
    'Academic Committee',
    'Technical Committee',
    'Joint Executive Council',
@@ -76,9 +77,29 @@ const getJournalCategoryBadge = (cat) => {
 };
 
 const getItemOffices = (item) => {
-   if (Array.isArray(item?.offices) && item.offices.length > 0) return item.offices;
-   if (typeof item?.office === 'string' && item.office) return [item.office];
-   return ['General Secretary'];
+   let list = [];
+   if (Array.isArray(item?.offices) && item.offices.length > 0) {
+      list = item.offices;
+   } else if (typeof item?.office === 'string' && item.office) {
+      list = [item.office];
+   }
+   // Map legacy "Director of..." names
+   list = list.map((off) => {
+      if (off === 'Director of Socials') return 'Social Director';
+      if (off === 'Director of Sports') return 'Sports Director';
+      return off;
+   });
+   // Every program must include the President
+   return Array.from(new Set(['President', ...list]));
+};
+
+const sortByEventDateDesc = (a, b) => {
+   const timeA = a?.date ? new Date(a.date).getTime() : 0;
+   const timeB = b?.date ? new Date(b.date).getTime() : 0;
+   if (timeB !== timeA) return timeB - timeA;
+   const createdA = a?.created_at ? new Date(a.created_at).getTime() : 0;
+   const createdB = b?.created_at ? new Date(b.created_at).getTime() : 0;
+   return createdB - createdA;
 };
 
 export default function AdminJournalPage() {
@@ -94,7 +115,7 @@ export default function AdminJournalPage() {
    const [form, setForm] = useState({
       title: '',
       category: 'Tutorial',
-      offices: ['General Secretary'],
+      offices: ['President'],
       date: new Date().toISOString().split('T')[0],
       attendance: '',
       semester: 'First Semester',
@@ -124,7 +145,7 @@ export default function AdminJournalPage() {
          if (error) {
             console.warn('Could not load event_journal table:', error.message);
          } else if (data) {
-            setJournal(data);
+            setJournal([...data].sort(sortByEventDateDesc));
          }
       } catch (err) {
          console.error('Fetch journal error:', err);
@@ -142,7 +163,7 @@ export default function AdminJournalPage() {
       setForm({
          title: '',
          category: 'Tutorial',
-         offices: ['General Secretary'],
+         offices: ['President'],
          date: new Date().toISOString().split('T')[0],
          attendance: '',
          semester: 'First Semester',
@@ -167,21 +188,20 @@ export default function AdminJournalPage() {
 
    const handleSave = async (e) => {
       e.preventDefault();
-      if (!form.offices || form.offices.length === 0) {
-         notify('error', 'Please select at least one organizing office.');
-         return;
-      }
       setIsSaving(true);
       try {
          const {
             data: { user },
          } = await supabase.auth.getUser();
 
+         // Ensure President is always included as every program must include the President
+         const finalOffices = Array.from(new Set(['President', ...(form.offices || [])]));
+
          const payload = {
             title: form.title.trim(),
             category: form.category,
-            offices: form.offices,
-            office: form.offices[0],
+            offices: finalOffices,
+            office: 'President',
             date: form.date,
             attendance: form.attendance ? parseInt(form.attendance, 10) : 0,
             semester: form.semester,
@@ -224,13 +244,15 @@ export default function AdminJournalPage() {
       }
    };
 
-   const filteredJournal = journal.filter((item) => {
-      const itemOffices = getItemOffices(item);
-      const matchOffice = filterOffice === 'all' || itemOffices.includes(filterOffice);
-      const matchCategory = filterCategory === 'all' || item.category === filterCategory;
-      const matchSemester = filterSemester === 'all' || item.semester === filterSemester;
-      return matchOffice && matchCategory && matchSemester;
-   });
+   const filteredJournal = journal
+      .filter((item) => {
+         const itemOffices = getItemOffices(item);
+         const matchOffice = filterOffice === 'all' || itemOffices.includes(filterOffice);
+         const matchCategory = filterCategory === 'all' || item.category === filterCategory;
+         const matchSemester = filterSemester === 'all' || item.semester === filterSemester;
+         return matchOffice && matchCategory && matchSemester;
+      })
+      .sort(sortByEventDateDesc);
 
    const totalAttendance = filteredJournal.reduce(
       (sum, item) => sum + (parseInt(item.attendance, 10) || 0),
@@ -466,29 +488,18 @@ export default function AdminJournalPage() {
                               return (
                                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                                     <td className="py-4 px-4 whitespace-nowrap text-slate-600 font-medium align-top">
-                                       <div className="flex items-center gap-1.5">
-                                          <Calendar size={13} className="text-slate-400 shrink-0" />
-                                          <span>
-                                             {item.date
+                                       {item.date
                                                 ? new Date(item.date).toLocaleDateString('en-US', {
                                                      month: 'short',
                                                      day: 'numeric',
                                                      year: 'numeric',
                                                   })
                                                 : '—'}
-                                          </span>
-                                       </div>
                                     </td>
                                     <td className="py-4 px-4 align-top space-y-1.5 min-w-[200px]">
                                        <div className="flex flex-wrap gap-1">
                                           {itemOffices.map((off) => (
-                                             <span
-                                                key={off}
-                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200/80 text-[11px] font-bold"
-                                             >
-                                                <Building2 size={10} className="text-teal-700 shrink-0" />
-                                                <span>{off}</span>
-                                             </span>
+                                             <span key={off} className="inline-block px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200/80 text-[11px] font-bold">{off}</span>
                                           ))}
                                        </div>
                                        <div>
@@ -623,12 +634,15 @@ export default function AdminJournalPage() {
                         </div>
                         <div className="p-3 bg-slate-50/70 border border-slate-200/90 rounded-2xl max-h-52 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                            {EXECUTIVE_OFFICES.map((off) => {
-                              const isChecked = form.offices.includes(off);
+                              const isPresident = off === 'President';
+                              const isChecked = isPresident || form.offices.includes(off);
                               return (
                                  <label
                                     key={off}
                                     className={`flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs font-medium cursor-pointer transition-colors border select-none ${
-                                       isChecked
+                                       isPresident
+                                          ? 'bg-teal-50 text-teal-900 font-bold border-teal-200/90 shadow-2xs cursor-default'
+                                          : isChecked
                                           ? 'bg-teal-50 text-teal-900 font-bold border-teal-200/90 shadow-2xs'
                                           : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                                     }`}
@@ -636,9 +650,14 @@ export default function AdminJournalPage() {
                                     <input
                                        type="checkbox"
                                        checked={isChecked}
+                                       disabled={isPresident}
                                        onChange={(e) => {
+                                          if (isPresident) return;
                                           if (e.target.checked) {
-                                             setForm({ ...form, offices: [...form.offices, off] });
+                                             setForm({
+                                                ...form,
+                                                offices: Array.from(new Set([...form.offices, off])),
+                                             });
                                           } else {
                                              setForm({
                                                 ...form,
@@ -646,18 +665,18 @@ export default function AdminJournalPage() {
                                              });
                                           }
                                        }}
-                                       className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer"
+                                       className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer disabled:cursor-default"
                                     />
                                     <span className="truncate">{off}</span>
+                                    {isPresident && (
+                                       <span className="text-[10px] font-bold text-teal-700 bg-teal-100/70 px-1.5 py-0.5 rounded ml-auto">
+                                          Fixed
+                                       </span>
+                                    )}
                                  </label>
                               );
                            })}
                         </div>
-                        {form.offices.length === 0 && (
-                           <p className="text-[11px] text-rose-600 font-medium mt-1">
-                              Please select at least one office.
-                           </p>
-                        )}
                      </div>
 
                      {/* Date, Semester, Turnout Row */}
