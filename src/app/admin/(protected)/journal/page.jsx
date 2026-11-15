@@ -15,6 +15,8 @@ import {
    Building2,
    CheckCircle2,
    AlertCircle,
+   FolderUp,
+   ExternalLink,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
@@ -50,6 +52,9 @@ const JOURNAL_CATEGORIES = [
 ];
 
 const SEMESTERS = ['First Semester', 'Second Semester', 'Annual'];
+
+const GOOGLE_DRIVE_FOLDER_URL =
+   'https://drive.google.com/drive/folders/1wKP9UcsmSph1I5fNsyMWtoh2Ak7_vA0L';
 
 const getJournalCategoryBadge = (cat) => {
    switch (cat) {
@@ -266,14 +271,27 @@ export default function AdminJournalPage() {
             title="Activity Journal"
             description="Log, track, and review all departmental workshops, tutorials, seminars, and events conducted during this tenure."
          >
-            <button
-               type="button"
-               onClick={openCreateModal}
-               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm shadow-sm transition-all active:scale-95 cursor-pointer"
-            >
-               <Plus size={16} />
-               <span>Record Activity</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+               <a
+                  href={GOOGLE_DRIVE_FOLDER_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm shadow-2xs transition-all active:scale-95 cursor-pointer"
+                  title="Upload event pictures, media, and document proofs to Google Drive"
+               >
+                  <FolderUp size={16} className="text-teal-700" />
+                  <span>Upload Media Proofs</span>
+                  <ExternalLink size={13} className="text-slate-400" />
+               </a>
+               <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm shadow-sm transition-all active:scale-95 cursor-pointer"
+               >
+                  <Plus size={16} />
+                  <span>Record Activity</span>
+               </button>
+            </div>
          </PageHeader>
 
          {/* Notification banner */}
@@ -342,6 +360,33 @@ export default function AdminJournalPage() {
                   </p>
                </div>
             </div>
+         </div>
+
+         {/* Event Media & Proofs Drive Banner */}
+         <div className="bg-gradient-to-r from-teal-900 via-teal-800 to-emerald-900 rounded-3xl p-5 sm:p-6 text-white shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-teal-700/50">
+            <div className="flex items-start gap-4">
+               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10 shadow-inner">
+                  <FolderUp size={22} className="text-teal-200" />
+               </div>
+               <div>
+                  <h4 className="text-base font-bold text-white flex items-center gap-2">
+                     <span>Event Media &amp; Picture Proofs Archive</span>
+                  </h4>
+                  <p className="text-xs sm:text-sm text-teal-100/80 mt-1 max-w-2xl leading-relaxed">
+                     Have pictures, video highlights, attendance sheets, or flyers from your events? Upload them directly to the official Google Drive folder for tenure stewardship reporting.
+                  </p>
+               </div>
+            </div>
+            <a
+               href={GOOGLE_DRIVE_FOLDER_URL}
+               target="_blank"
+               rel="noopener noreferrer"
+               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-teal-50 text-teal-900 font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0 cursor-pointer"
+            >
+               <FolderUp size={15} className="text-teal-700" />
+               <span>Open Drive Folder</span>
+               <ExternalLink size={13} className="text-teal-600" />
+            </a>
          </div>
 
          {/* Filters Bar */}
@@ -738,6 +783,23 @@ export default function AdminJournalPage() {
                            placeholder="Key outcomes, topics covered, venues, facilitators, or highlights..."
                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-teal-600"
                         />
+                     </div>
+
+                     {/* Upload Media to Google Drive Prompt */}
+                     <div className="p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                        <div className="flex items-center gap-2 text-teal-950 font-medium">
+                           <FolderUp size={16} className="text-teal-700 shrink-0" />
+                           <span>Have photos, videos, or attendance documents? Upload them to the official Google Drive folder.</span>
+                        </div>
+                        <a
+                           href={GOOGLE_DRIVE_FOLDER_URL}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="inline-flex items-center gap-1 font-bold text-teal-800 hover:text-teal-950 shrink-0 underline decoration-teal-400 cursor-pointer"
+                        >
+                           <span>Open Drive</span>
+                           <ExternalLink size={12} />
+                        </a>
                      </div>
 
                      <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
