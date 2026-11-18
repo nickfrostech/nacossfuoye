@@ -34,8 +34,15 @@ const FALLBACK_STATS = {
          html_url: 'https://github.com/apreezofficial',
          contributions: 5,
       },
+      {
+         login: '001Rey',
+         name: 'Olusegun Olalekan',
+         avatar_url: 'https://github.com/001Rey.png',
+         html_url: 'https://github.com/001Rey',
+         contributions: 1,
+      },
    ],
-   contributorsCount: 2,
+   contributorsCount: 3,
    issuesBreakdown: {
       totalOpen: 6,
       pureIssues: 4,
