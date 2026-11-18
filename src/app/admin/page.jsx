@@ -1,18 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { EyeOff, Eye, ArrowRight } from 'lucide-react';
 import { SecurityLock } from '@esvigy/react';
 
-export default function AdminLogin() {
+function AdminLoginForm() {
+   const searchParams = useSearchParams();
+   const isUnauthorized = searchParams.get('error') === 'unauthorized';
+
    const [formData, setFormData] = useState({ email: '', password: '' });
    const [isLoading, setIsLoading] = useState(false);
    const [errors, setErrors] = useState({});
    const [showPassword, setShowPassword] = useState(false);
-   const [error, setError] = useState('');
+   const [error, setError] = useState(
+      isUnauthorized ? 'Access denied: Your account is not assigned an administrative role.' : ''
+   );
    const router = useRouter();
    const supabase = createClient();
 
@@ -148,5 +153,19 @@ export default function AdminLogin() {
             </div>
          </div>
       </main>
+   );
+}
+
+export default function AdminLogin() {
+   return (
+      <Suspense fallback={
+         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
+            <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 flex justify-center">
+               <div className="animate-pulse text-slate-400">Loading admin portal...</div>
+            </div>
+         </main>
+      }>
+         <AdminLoginForm />
+      </Suspense>
    );
 }

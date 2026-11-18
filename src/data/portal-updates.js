@@ -55,4 +55,13 @@ export const PORTAL_CONTRIBUTORS = [
       html_url: 'https://github.com/apreezofficial',
       bio: 'Developed and integrated the Stroop Challenge colour and reflex game for the NACOSS Arcade Arena.',
    },
+   {
+      login: '001Rey',
+      name: 'Olusegun Olalekan',
+      level: '300 Level',
+      role: 'Digital Forensics & Incident Response Analyst',
+      avatar_url: 'https://github.com/001Rey.png',
+      html_url: 'https://github.com/001Rey',
+      bio: 'Conducted security assessment, digital forensics, and incident response analysis for the NACOSS FUOYE portal.',
+   },
 ];
