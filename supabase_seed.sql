@@ -207,6 +207,10 @@ VALUES
 
 -- ==========================================
 -- IMPORTANT NOTE FOR CONTRIBUTORS:
--- To test the Admin Dashboard, you must manually create a user in your Supabase Auth,
--- then insert their email into the `user_roles` table with the role 'admin'.
+-- To test the Admin Dashboard, create a user in your Supabase Auth (Authentication -> Users),
+-- then insert their email into the `user_roles` table with an appropriate role:
+--
+-- INSERT INTO public.user_roles (user_email, role)
+-- VALUES ('your-email@example.com', 'admin')
+-- ON CONFLICT (user_email) DO NOTHING;
 -- ==========================================

@@ -30,11 +30,15 @@ AS $$
 $$;
 
 -- RLS for user_roles
-CREATE POLICY "Allow authenticated to read roles" ON public.user_roles 
-FOR SELECT TO authenticated USING (true);
+-- Least-privilege access: users can only read their own role record
+CREATE POLICY "Allow users to read own role" ON public.user_roles 
+FOR SELECT TO authenticated USING (
+  user_email = (auth.jwt() ->> 'email')
+);
 
 CREATE POLICY "Allow admins to manage roles" ON public.user_roles 
-FOR ALL TO authenticated USING (public.get_user_role() IN ('admin', 'president'));
+FOR ALL TO authenticated USING (public.get_user_role() IN ('admin', 'president'))
+WITH CHECK (public.get_user_role() IN ('admin', 'president'));
 
 -- 2. Memo Table
 CREATE TABLE IF NOT EXISTS public.memo (
@@ -139,7 +143,7 @@ FOR ALL TO authenticated USING (
 
 
 -- Game Scores Table
-CREATE TABLE public.game_scores (
+CREATE TABLE IF NOT EXISTS public.game_scores (
   id uuid not null default gen_random_uuid(),
   game_slug text not null,
   gaming_name text not null,
@@ -148,6 +152,14 @@ CREATE TABLE public.game_scores (
   created_at timestamp with time zone null default now(),
   constraint game_scores_pkey primary key (id)
 ) TABLESPACE pg_default;
+
+ALTER TABLE public.game_scores ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view game scores" ON public.game_scores 
+FOR SELECT USING (true);
+
+CREATE POLICY "Public can submit game scores" ON public.game_scores 
+FOR INSERT WITH CHECK (true);
 
 -- 6. Events Table
 CREATE TABLE IF NOT EXISTS public.events (
