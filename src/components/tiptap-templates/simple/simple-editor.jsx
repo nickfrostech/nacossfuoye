@@ -32,6 +32,7 @@ import {
 // --- Tiptap Node ---
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension"
+import { PageBreak } from "@/components/tiptap-node/page-break-node/page-break-extension"
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss"
 import "@/components/tiptap-node/code-block-node/code-block-node.scss"
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss"
@@ -73,6 +74,7 @@ import {
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
 import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon"
 import { LinkIcon } from "@/components/tiptap-icons/link-icon"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 // --- Hooks ---
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
@@ -220,7 +222,7 @@ const MobileToolbarContent = ({
    </>
 )
 
-export function SimpleEditor({ content, setContent, mode = 'split', toolbarPortalRef }) {
+export function SimpleEditor({ content, setContent, mode = 'split', toolbarPortalRef, isActive = true, onFocus }) {
    const isMobile = useIsBreakpoint()
    const [mobileView, setMobileView] = useState("main")
    const [isSearchAndReplaceOpen, setIsSearchAndReplaceOpen] = useState(false)
@@ -248,6 +250,14 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
             "aria-label": "Main content area, start typing to enter text.",
             class: "simple-editor",
          },
+         handleScrollTo: () => {
+            // Suppress browser/ProseMirror auto-scrolling container in letterhead document mode
+            // to ensure top text never scrolls out of view
+            return mode === 'document';
+         },
+      },
+      onFocus: () => {
+         if (onFocus) onFocus();
       },
       extensions: [
          StarterKit.configure({
@@ -258,6 +268,7 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
             },
          }),
          HorizontalRule,
+         PageBreak,
          TextAlign.configure({ types: ["heading", "paragraph"] }),
          TaskList,
          TaskItem.configure({ nested: true }),
@@ -327,27 +338,69 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
       openSearchAndReplace()
    }, [closeSearchAndReplace, isSearchAndReplaceOpen, openSearchAndReplace])
 
+   const scrollToolbarLeft = (e) => {
+      e?.preventDefault()
+      e?.stopPropagation()
+      if (toolbarRef.current) {
+         toolbarRef.current.scrollBy({ left: -220, behavior: "smooth" })
+      }
+   }
+
+   const scrollToolbarRight = (e) => {
+      e?.preventDefault()
+      e?.stopPropagation()
+      if (toolbarRef.current) {
+         toolbarRef.current.scrollBy({ left: 220, behavior: "smooth" })
+      }
+   }
+
    const renderToolbar = () => (
-      <Toolbar
-         ref={toolbarRef}
-         className="w-full bg-white shadow-sm"
-      >
-         {mobileView === "main" ? (
-            <MainToolbarContent
-               onHighlighterClick={() => setMobileView("highlighter")}
-               onLinkClick={() => setMobileView("link")}
-               onSearchAndReplaceClick={toggleSearchAndReplace}
-               isSearchAndReplaceOpen={isSearchAndReplaceOpen}
-               searchAndReplaceButtonRef={searchAndReplaceButtonRef}
-               isMobile={isMobile}
-            />
-         ) : (
-            <MobileToolbarContent
-               type={mobileView === "highlighter" ? "highlighter" : "link"}
-               onBack={() => setMobileView("main")}
-            />
-         )}
-      </Toolbar>
+      <div className="relative w-full flex items-center bg-white rounded-xl shadow-xs border border-slate-200/80 overflow-hidden group/toolbar">
+         <button
+            type="button"
+            tabIndex={-1}
+            onClick={scrollToolbarLeft}
+            aria-label="Scroll toolbar left"
+            title="Scroll toolbar left"
+            className="shrink-0 h-10 px-2 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10 cursor-pointer border-r border-slate-100"
+         >
+            <ChevronLeft className="w-4 h-4" />
+         </button>
+
+         <div className="flex-1 min-w-0 overflow-hidden">
+            <Toolbar
+               ref={toolbarRef}
+               className="w-full bg-white shadow-none border-b-0"
+            >
+               {mobileView === "main" ? (
+                  <MainToolbarContent
+                     onHighlighterClick={() => setMobileView("highlighter")}
+                     onLinkClick={() => setMobileView("link")}
+                     onSearchAndReplaceClick={toggleSearchAndReplace}
+                     isSearchAndReplaceOpen={isSearchAndReplaceOpen}
+                     searchAndReplaceButtonRef={searchAndReplaceButtonRef}
+                     isMobile={isMobile}
+                  />
+               ) : (
+                  <MobileToolbarContent
+                     type={mobileView === "highlighter" ? "highlighter" : "link"}
+                     onBack={() => setMobileView("main")}
+                  />
+               )}
+            </Toolbar>
+         </div>
+
+         <button
+            type="button"
+            tabIndex={-1}
+            onClick={scrollToolbarRight}
+            aria-label="Scroll toolbar right"
+            title="Scroll toolbar right"
+            className="shrink-0 h-10 px-2 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10 cursor-pointer border-l border-slate-100"
+         >
+            <ChevronRight className="w-4 h-4" />
+         </button>
+      </div>
    )
 
    const editorContextValue = useMemo(() => ({ editor }), [editor])
@@ -356,7 +409,7 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
       <div className={`simple-editor-wrapper relative ${mode === 'document' ? 'document-mode' : 'split-mode'}`}>
          <EditorContext.Provider value={editorContextValue}>
             {mode === 'document' 
-               ? (portalTarget ? createPortal(renderToolbar(), portalTarget) : null)
+               ? (portalTarget && isActive ? createPortal(renderToolbar(), portalTarget) : null)
                : renderToolbar()
             }
 
