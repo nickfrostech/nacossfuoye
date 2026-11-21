@@ -300,10 +300,10 @@ export default function Navbar() {
             }`}
          />
 
-         {/* Floating Top Navbar Container - Fixed position ensures persistent stickiness on all pages */}
+         {/* Top Navbar Container - Sticky on public routes, static in-place (relative) on admin routes */}
          <header 
             ref={navContainerRef}
-            className="fixed top-4 left-0 right-0 z-50 w-full px-3 sm:px-6 max-w-6xl mx-auto pointer-events-none"
+            className={`${isAdminRoute ? 'relative' : 'sticky top-0'} pt-2 sm:pt-3 pb-1 sm:pb-2 z-50 w-full px-3 sm:px-6 max-w-6xl mx-auto pointer-events-none`}
          >
             <nav 
                aria-label="Main Navigation"
@@ -523,7 +523,7 @@ export default function Navbar() {
             {/* Mobile Dropdown Menu Drawer with Fluid Opening and Closing Animation */}
             <div 
                aria-hidden={!isMenuOpen}
-               className={`md:hidden pointer-events-auto mt-2 p-4 bg-white/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain space-y-4 ${
+               className={`md:hidden pointer-events-auto absolute top-full left-3 right-3 sm:left-6 sm:right-6 mt-2 p-4 bg-white/95 backdrop-blur-2xl rounded-3xl border border-slate-200/90 shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] origin-top max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain space-y-4 ${
                   isMenuOpen 
                      ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto visible' 
                      : 'opacity-0 scale-95 -translate-y-2 pointer-events-none invisible'

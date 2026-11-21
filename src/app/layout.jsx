@@ -145,7 +145,7 @@ const jsonLd = {
 export default function RootLayout({ children }) {
    return (
       <html lang="en" className="scroll-smooth">
-         <body className={`${raleway.variable} ${nasalization.variable} ${inter.variable} ${dmSans.variable} ${poppins.variable} font-sans antialiased min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-green-100 selection:text-green-900 pt-20 sm:pt-24`}>
+         <body className={`${raleway.variable} ${nasalization.variable} ${inter.variable} ${dmSans.variable} ${poppins.variable} font-sans antialiased min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-green-100 selection:text-green-900`}>
             <script
                type="application/ld+json"
                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

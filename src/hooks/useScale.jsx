@@ -1,7 +1,9 @@
-import { useLayoutEffect } from "react";
+import { useEffect, useRef } from "react";
 
-function useScale({ letterHeadRef, previewRef, baseWidth = 794, dependency = [] }) {
-   useLayoutEffect(() => {
+function useScale({ letterHeadRef, previewRef, baseWidth = 794 }) {
+   const rafRef = useRef(null);
+
+   useEffect(() => {
       function scalePaper() {
          const paper = letterHeadRef.current;
          const wrapper = previewRef.current;
@@ -9,49 +11,48 @@ function useScale({ letterHeadRef, previewRef, baseWidth = 794, dependency = [] 
 
          if (paper.dataset.scalingPaused === 'true') return;
 
-         // Get exact float width rather than rounded integer offsetWidth to prevent clipping on right/bottom
+         // Get exact float width of wrapper container
          const exactWidth = wrapper.getBoundingClientRect().width;
+         if (!exactWidth || exactWidth <= 0) return;
          const scale = exactWidth / baseWidth;
 
-         paper.style.transform = `scale(${scale})`;
-         paper.style.transformOrigin = "top left";
-         
-         // Explicitly set the wrapper height so the container shrinks to fit the scaled paper
-         wrapper.style.height = `${paper.offsetHeight * scale}px`;
+         const targetTransform = `scale(${scale})`;
+         if (paper.style.transform !== targetTransform) {
+            paper.style.transform = targetTransform;
+            paper.style.transformOrigin = "top left";
+         }
+      }
+
+      function scheduleScale() {
+         if (rafRef.current) cancelAnimationFrame(rafRef.current);
+         rafRef.current = requestAnimationFrame(scalePaper);
       }
 
       const wrapper = previewRef.current;
       let resizeObserver;
-      let mutationObserver;
 
-      if (wrapper) {
-         // Use ResizeObserver for real-time tracking of container width changes
-         resizeObserver = new ResizeObserver(() => scalePaper());
+      if (wrapper && typeof ResizeObserver !== 'undefined') {
+         resizeObserver = new ResizeObserver(() => {
+            scheduleScale();
+         });
          resizeObserver.observe(wrapper);
       }
 
-      const paper = letterHeadRef.current;
-      if (paper) {
-         mutationObserver = new MutationObserver(() => scalePaper());
-         mutationObserver.observe(paper, { childList: true, subtree: true, characterData: true, attributes: true });
-      }
+      window.addEventListener("resize", scheduleScale, { passive: true });
+      scheduleScale();
 
-      window.addEventListener("load", scalePaper);
-      // Wait for fonts/layout to settle
-      const timer = setTimeout(scalePaper, 100);
-      scalePaper();
+      const timer = setTimeout(scheduleScale, 120);
 
       return () => {
          clearTimeout(timer);
+         if (rafRef.current) cancelAnimationFrame(rafRef.current);
          if (resizeObserver && wrapper) {
             resizeObserver.unobserve(wrapper);
          }
          resizeObserver?.disconnect();
-         mutationObserver?.disconnect();
-         window.removeEventListener("load", scalePaper);
+         window.removeEventListener("resize", scheduleScale);
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, dependency);
+   }, [baseWidth, letterHeadRef, previewRef]);
 }
 
 export default useScale;

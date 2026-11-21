@@ -11,27 +11,9 @@ body {
 	}
 }
 
-body {
+.simple-editor-wrapper {
 	font-family: "Inter", sans-serif;
 	color: var(--tt-theme-text);
-	font-optical-sizing: auto;
-	font-weight: 400;
-	font-style: normal;
-	padding: 0;
-	overscroll-behavior-y: none;
-}
-
-html,
-body {
-	overscroll-behavior-x: none;
-}
-
-html,
-body,
-#root,
-#app {
-	height: 100%;
-	background-color: var(--tt-bg-color);
 }
 
 ::-webkit-scrollbar {
@@ -218,5 +200,33 @@ body,
 
 	li p {
 		margin-top: 0.15rem;
+	}
+}
+
+/* Page Break Divider Styling */
+hr.memo-page-break-rule {
+	border: none;
+	border-top: 2px dashed #039133;
+	margin: 2rem 0;
+	position: relative;
+	text-align: center;
+	overflow: visible;
+
+	&::after {
+		content: "📄 CONTINUATION SHEET (PAGE BREAK)";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background: #f0fdf4;
+		color: #039133;
+		padding: 3px 12px;
+		font-size: 10px;
+		font-weight: 800;
+		letter-spacing: 0.05em;
+		border: 1px solid #86efac;
+		border-radius: 9999px;
+		white-space: nowrap;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 	}
 }

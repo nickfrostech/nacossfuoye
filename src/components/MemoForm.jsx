@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import Letterhead from '@/components/Letterhead';
 import { createClient } from '@/utils/supabase/client';
 import DownloadBtn from '@/components/DownloadBtn';
@@ -8,7 +8,8 @@ import useScale from '@/hooks/useScale';
 import PageHeader from '@/components/PageHeader';
 import { AddNewMemo, UpdateMemo } from '@/components/PublishBtn';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor';
-import { History, RotateCcw, Trash2 } from 'lucide-react';
+import { History, RotateCcw, Trash2, PlusSquare, Scissors, Layers } from 'lucide-react';
+import { splitMemoContent, joinMemoPages, smartSplitContent } from '@/utils/memo-pagination';
 
 const PREFIX_MAP = {
    executive: 'NACOSS',
@@ -16,6 +17,124 @@ const PREFIX_MAP = {
    src: 'CSCSRC',
    president: 'CSCPR'
 };
+
+const ScaledEditorSheet = memo(function ScaledEditorSheet({
+   pageIndex,
+   totalPages,
+   content,
+   onContentChange,
+   date,
+   referenceNumber,
+   memoType,
+   viewMode,
+   toolbarPortalRef,
+   isActive,
+   onFocus,
+   onRemoveSheet,
+   onAutoSplit,
+   onRegisterRef,
+}) {
+   const letterHeadRef = useRef(null);
+   const previewRef = useRef(null);
+   const [isOverflowing, setIsOverflowing] = useState(false);
+
+   useScale({ letterHeadRef, previewRef });
+
+   const handleOverflowChange = useCallback((isOver) => {
+      setIsOverflowing(isOver);
+   }, []);
+
+   const handleContentChange = useCallback((val) => {
+      onContentChange(pageIndex, val);
+   }, [onContentChange, pageIndex]);
+
+   const handleFocus = useCallback(() => {
+      onFocus(pageIndex);
+   }, [onFocus, pageIndex]);
+
+   const handleRemove = useCallback(() => {
+      onRemoveSheet(pageIndex);
+   }, [onRemoveSheet, pageIndex]);
+
+   const handleSplit = useCallback(() => {
+      onAutoSplit(pageIndex, letterHeadRef.current);
+   }, [onAutoSplit, pageIndex]);
+
+   useEffect(() => {
+      onRegisterRef(pageIndex, letterHeadRef);
+      return () => {
+         onRegisterRef(pageIndex, null);
+      };
+   }, [pageIndex, onRegisterRef]);
+
+   const pageNumber = pageIndex + 1;
+
+   return (
+      <div className={`${pageIndex > 0 ? 'mt-8' : ''} shadow-xl rounded-2xl w-full relative flex flex-col min-w-0 bg-white border border-slate-100 overflow-hidden`}>
+         {/* Sheet Header: Sheet X of Y */}
+         <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">
+            <div className="flex items-center gap-2">
+               <span className={`w-2 h-2 rounded-full ${pageNumber === 1 ? 'bg-primary' : 'bg-emerald-500'}`} />
+               <span>
+                  Sheet {pageNumber} of {totalPages}
+                  {pageNumber > 1 ? ' (Continuation Sheet)' : ''}
+               </span>
+               {referenceNumber && (
+                  <span className="font-mono text-slate-400">({referenceNumber})</span>
+               )}
+            </div>
+            {/* Continuation sheets have the remove button. Sheet 1 has NO add button at the top */}
+            {pageNumber > 1 && (
+               <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-rose-600 hover:bg-rose-50 font-medium transition cursor-pointer"
+               >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Remove Sheet {pageNumber}</span>
+               </button>
+            )}
+         </div>
+
+         {/* Letterhead Paper Container */}
+         <div ref={previewRef} className="w-full relative aspect-794/1123 overflow-hidden bg-gray-100">
+            <Letterhead
+               date={date}
+               referenceNumber={referenceNumber}
+               content={content}
+               letterHeadRef={letterHeadRef}
+               viewMode={viewMode}
+               setContent={handleContentChange}
+               type={memoType}
+               toolbarPortalRef={toolbarPortalRef}
+               pageNumber={pageNumber}
+               totalPages={totalPages}
+               onOverflowChange={handleOverflowChange}
+               isActive={isActive}
+               onFocus={handleFocus}
+            />
+         </div>
+
+         {/* Overflow prompt on this Sheet */}
+         {isOverflowing && (
+            <div className="p-4 border-t border-amber-300 bg-amber-50 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+               <div className="text-xs">
+                  <span className="font-bold text-amber-900 block sm:inline">⚠️ Content overflows Sheet {pageNumber} printable height: </span>
+                  <span className="text-amber-800">Your text exceeds the printable area. Split onto Sheet {pageNumber + 1} for a clean multi-page memo.</span>
+               </div>
+               <button
+                  type="button"
+                  onClick={handleSplit}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs cursor-pointer transition active:scale-95 shrink-0"
+               >
+                  <Scissors className="w-3.5 h-3.5" />
+                  Auto-Split to Sheet {pageNumber + 1}
+               </button>
+            </div>
+         )}
+      </div>
+   );
+});
 
 export default function MemoForm({ isNew = true, initialData = {}, memoType = 'executive' }) {
    const [isNewMemo, setIsNewMemo] = useState(isNew);
@@ -31,9 +150,34 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
    const [title, setTitle] = useState(initialData.head || '');
    const [date, setDate] = useState(initialData.date || '');
    const [referenceNumber, setReferenceNumber] = useState(initialData.reference || '');
+   const [viewMode, setViewMode] = useState('split');
    const supabase = createClient();
 
-   const [content, setContent] = useState(initialData.content || '');
+   const [pages, setPages] = useState(() => {
+      const initial = initialData.content || '';
+      return splitMemoContent(initial);
+   });
+   const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+
+   const combinedContent = joinMemoPages(pages);
+   const [splitEditorHtml, setSplitEditorHtml] = useState(() => joinMemoPages(pages));
+
+   const prevViewModeRef = useRef('split');
+   // Keep splitEditorHtml in sync when switching from document view to split view
+   useEffect(() => {
+      if (prevViewModeRef.current !== 'split' && viewMode === 'split') {
+         setSplitEditorHtml(joinMemoPages(pages));
+      }
+      prevViewModeRef.current = viewMode;
+   }, [viewMode, pages]);
+
+   const toolbarPortalRef = useRef(null);
+   const publishRef = useRef(null);
+   const paperRefs = useRef([]);
+
+   const handleRegisterRef = useCallback((index, ref) => {
+      paperRefs.current[index] = ref;
+   }, []);
 
    // Check for unsaved draft on initial load
    useEffect(() => {
@@ -63,7 +207,11 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
             setDate(pendingDraft.date);
          }
          if (pendingDraft.content) {
-            setContent(pendingDraft.content);
+            const restoredPages = splitMemoContent(pendingDraft.content);
+            const joined = joinMemoPages(restoredPages);
+            setPages(restoredPages);
+            setSplitEditorHtml(joined);
+            setActiveSheetIndex(0);
          }
          setIsSaved(false);
       }
@@ -88,13 +236,11 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
          const parser = new DOMParser();
          const doc = parser.parseFromString(htmlContent, 'text/html');
 
-         // 1. Look for explicit heading tags (h1, h2, h3)
          const heading = doc.querySelector('h1, h2, h3');
          if (heading && heading.textContent.trim()) {
             return heading.textContent.trim();
          }
 
-         // 2. Scan elements while ignoring address lines (To:, From:, etc.)
          const ignorePrefixes = /^(to|from|through|date|ref|reference|internal memo|memorandum)\s*:/i;
          const elements = doc.body.querySelectorAll('p, div, li');
 
@@ -117,14 +263,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       return '';
    };
 
-   const effectiveHead = title.trim() || getSmartTitle(content) || initialData.head || "Untitled Memo";
-   const [viewMode, setViewMode] = useState('split');
-
-   const letterHeadRef = useRef(null);
-   const previewRef = useRef(null);
-   const toolbarPortalRef = useRef(null);
-
-   const publishRef = useRef(null);
+   const effectiveHead = title.trim() || getSmartTitle(pages[0] || combinedContent) || initialData.head || "Untitled Memo";
 
    useEffect(() => {
       if (!isNew || initialData.reference) return;
@@ -173,15 +312,15 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
    // Auto-save draft to local storage so user content is never lost if session expires or page refreshes
    useEffect(() => {
       if (!isNew || typeof window === 'undefined') return;
-      if (pendingDraft) return; // Don't overwrite pending draft until user restores or discards
-      if (!content && !date && !title) return;
+      if (pendingDraft) return;
+      if (!combinedContent && !date && !title) return;
 
       const timer = setTimeout(() => {
          try {
             localStorage.setItem(`nacoss_memo_draft_${memoType}`, JSON.stringify({
                title,
                date,
-               content,
+               content: combinedContent,
                savedAt: Date.now()
             }));
          } catch (e) {
@@ -190,9 +329,74 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       }, 500);
 
       return () => clearTimeout(timer);
-   }, [isNew, memoType, title, date, content, pendingDraft]);
+   }, [isNew, memoType, title, date, combinedContent, pendingDraft]);
 
-   useScale({ letterHeadRef, previewRef });
+   const handleSheetFocus = useCallback((idx) => {
+      setActiveSheetIndex(idx);
+   }, []);
+
+   const handleAddSheet = useCallback(() => {
+      setPages(prev => {
+         const next = [...prev, '<p></p>'];
+         const joined = joinMemoPages(next);
+         setSplitEditorHtml(joined);
+         setActiveSheetIndex(next.length - 1);
+         return next;
+      });
+      setIsSaved(false);
+   }, []);
+
+   const handleRemovePage = useCallback((indexToRemove) => {
+      setPages(prev => {
+         if (prev.length <= 1) return prev;
+         const next = prev.filter((_, idx) => idx !== indexToRemove);
+         const joined = joinMemoPages(next);
+         setSplitEditorHtml(joined);
+         return next;
+      });
+      setIsSaved(false);
+      setActiveSheetIndex(prev => Math.max(0, prev - 1));
+   }, []);
+
+   const handleAutoSplit = useCallback((indexToSplit, letterHeadEl) => {
+      setPages(prev => {
+         const [p1, p2] = smartSplitContent(prev[indexToSplit], letterHeadEl, memoType);
+         const next = [...prev];
+         next.splice(indexToSplit, 1, p1, p2);
+         const joined = joinMemoPages(next);
+         setSplitEditorHtml(joined);
+         return next;
+      });
+      setIsSaved(false);
+      setActiveSheetIndex(indexToSplit);
+   }, [memoType]);
+
+   const handleSheetContentChange = useCallback((index, newSheetContent) => {
+      setPages(prev => {
+         const next = [...prev];
+         next[index] = newSheetContent;
+         return next;
+      });
+      setIsSaved(false);
+   }, []);
+
+   const splitDebounceRef = useRef(null);
+
+   useEffect(() => {
+      return () => {
+         if (splitDebounceRef.current) clearTimeout(splitDebounceRef.current);
+      };
+   }, []);
+
+   const handleSplitEditorChange = useCallback((val) => {
+      setSplitEditorHtml(val);
+      setIsSaved(false);
+      if (splitDebounceRef.current) clearTimeout(splitDebounceRef.current);
+      splitDebounceRef.current = setTimeout(() => {
+         const parsedPages = splitMemoContent(val);
+         setPages(parsedPages);
+      }, 150);
+   }, []);
 
    const handlePublishSuccess = (refNum) => {
       if (typeof window !== 'undefined') {
@@ -208,7 +412,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       lastSavedRef.current = {
          title,
          date,
-         content,
+         content: combinedContent,
          reference: refNum || referenceNumber,
       };
       if (typeof window !== 'undefined' && refNum) {
@@ -221,14 +425,12 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
       lastSavedRef.current = {
          title,
          date,
-         content,
+         content: combinedContent,
          reference: refNum || referenceNumber,
       };
    };
 
    const handleBeforeDownload = async () => {
-      // If the memo has already been published/saved and there are no unsaved changes,
-      // allow download immediately without re-publishing or prompting!
       if (isSaved) {
          return true;
       }
@@ -240,25 +442,29 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
 
    const formattedDraftTime = pendingDraft?.savedAt
       ? new Date(pendingDraft.savedAt).toLocaleString(undefined, {
-           month: 'short',
-           day: 'numeric',
-           hour: 'numeric',
-           minute: '2-digit',
-           hour12: true,
-        })
+         month: 'short',
+         day: 'numeric',
+         hour: 'numeric',
+         minute: '2-digit',
+         hour12: true,
+      })
       : null;
 
    return (
-      <div className="relative pt-4 sm:pt-6">
+      <div className="relative">
          <PageHeader
             title={isNewMemo ? 'Create New Memo' : 'Edit Memo'}
          >
             <div className="relative z-10 flex flex-wrap items-center gap-2 sm:gap-3">
-               <DownloadBtn elementRef={letterHeadRef} referenceNumber={referenceNumber || 'draft'} onBeforeDownload={handleBeforeDownload} />
+               <DownloadBtn
+                  elementRefs={paperRefs.current.slice(0, pages.length)}
+                  referenceNumber={referenceNumber || 'draft'}
+                  onBeforeDownload={handleBeforeDownload}
+               />
                {isNewMemo ? (
-                  <AddNewMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={effectiveHead} content={content} type={memoType} onSuccess={handlePublishSuccess} />
+                  <AddNewMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={effectiveHead} content={combinedContent} type={memoType} onSuccess={handlePublishSuccess} />
                ) : (
-                  <UpdateMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={effectiveHead} content={content} type={memoType} onSuccess={handleUpdateSuccess} />
+                  <UpdateMemo ref={publishRef} referenceNumber={referenceNumber} date={date} head={effectiveHead} content={combinedContent} type={memoType} onSuccess={handleUpdateSuccess} />
                )}
             </div>
          </PageHeader>
@@ -300,18 +506,17 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
          )}
 
          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-8 items-start">
-            {/* Form Section */}
-            <aside className="p-5 rounded-2xl lg:sticky lg:top-32 min-w-0 shadow-xl">
+            {/* Form Section: Independent Scrollable Sidebar */}
+            <aside className="p-5 rounded-2xl min-w-0 shadow-xl bg-white border border-slate-200/80 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] overflow-y-auto">
                <div className="space-y-4">
                   <div className="flex justify-around bg-slate-100/80 p-1 rounded-xl w-full">
-                     <button onClick={() => setViewMode('split')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 ${viewMode === 'split' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:text-primary'}`}>Split View</button>
-                     <button onClick={() => setViewMode('document')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 ${viewMode === 'document' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:text-primary'}`}>Document View</button>
+                     <button onClick={() => setViewMode('split')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 ${viewMode === 'split' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:text-primary cursor-pointer'}`}>Split View</button>
+                     <button onClick={() => setViewMode('document')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex-1 ${viewMode === 'document' ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:text-primary cursor-pointer'}`}>Document View</button>
                   </div>
 
                   <div>
                      <div className="flex items-center justify-between mb-2">
                         <label htmlFor="titleInput" className="block text-xs font-bold text-primary uppercase tracking-wider">Memo Title / Subject</label>
-                        <span className="text-[10px] text-slate-400 font-medium">Used for memo list & search</span>
                      </div>
                      <input
                         type="text"
@@ -322,10 +527,10 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                            setIsSaved(false);
                         }}
                         placeholder="e.g. Notice of Departmental Meeting"
-                        className="w-full px-4 py-3 rounded-xl border border-primary/70 focus:border-primary outline-none transition-all duration-300 text-slate-900 bg-white/90 focus:bg-white backdrop-blur-sm"
+                        className="w-full px-4 py-3 rounded-xl border border-primary/70 focus:border-primary outline-none transition-all duration-300 text-slate-900 bg-white"
                      />
                   </div>
-                  
+
                   <div>
                      <label htmlFor="dateInput" className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Date</label>
                      <input
@@ -336,7 +541,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                            setDate(e.target.value);
                            setIsSaved(false);
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-primary/70 focus:border-primary  outline-none transition-all duration-300 text-slate-900 bg-white/90 focus:bg-white backdrop-blur-sm"
+                        className="w-full px-4 py-3 rounded-xl border border-primary/70 focus:border-primary outline-none transition-all duration-300 text-slate-900 bg-white"
                      />
                   </div>
 
@@ -352,46 +557,118 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
                         }}
                         placeholder={`${PREFIX_MAP[memoType] || 'NACOSS'}/25/...`}
                         disabled={!isNewMemo}
-                        className={`w-full px-4 py-3 rounded-xl border outline-none transition-all duration-300 text-slate-900 backdrop-blur-sm ${!isNewMemo ? 'bg-white/50 border-white/10 cursor-not-allowed opacity-80' : 'border-primary/70 focus:border-primary  bg-white/90 focus:bg-white'}`}
+                        className={`w-full px-4 py-3 rounded-xl border outline-none transition-all duration-300 text-slate-900 ${!isNewMemo ? 'bg-slate-100/80 border-slate-200 cursor-not-allowed opacity-80' : 'border-primary/70 focus:border-primary bg-white'}`}
                      />
                   </div>
 
+                  {/* Multi-sheet status bar in sidebar: Can add new sheet or remove last sheet */}
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                     <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                        <Layers className="w-4 h-4 text-primary" />
+                        <span>Pages: {pages.length} sheet{pages.length > 1 ? 's' : ''}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <button
+                           type="button"
+                           onClick={handleAddSheet}
+                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-medium transition cursor-pointer"
+                        >
+                           <PlusSquare className="w-3.5 h-3.5" />
+                           + Add Sheet
+                        </button>
+                        {pages.length > 1 && (
+                           <button
+                              type="button"
+                              onClick={() => handleRemovePage(pages.length - 1)}
+                              title="Remove Last Sheet"
+                              className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+                           >
+                              <Trash2 className="w-3.5 h-3.5" />
+                           </button>
+                        )}
+                     </div>
+                  </div>
 
                   {viewMode === 'split' && (
                      <div>
-                        <label htmlFor="quill-editor" className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Memo Content</label>
-                        <div className="rounded-xl bg-white/90 backdrop-blur-sm transition-all duration-300">
+                        <div className="flex items-center justify-between mb-2">
+                           <label htmlFor="quill-editor" className="block text-xs font-bold text-primary uppercase tracking-wider">
+                              Memo Content (All Sheets)
+                           </label>
+                           <span className="text-[11px] text-slate-500 font-medium">
+                              {pages.length} sheet{pages.length > 1 ? 's' : ''} • Ctrl+A to format all
+                           </span>
+                        </div>
+
+                        <div className="rounded-xl bg-white transition-all duration-300">
                            <SimpleEditor
-                              setContent={(val) => {
-                                 setContent(val);
-                                 setIsSaved(false);
-                              }}
-                              content={content}
+                              setContent={handleSplitEditorChange}
+                              content={splitEditorHtml}
                               mode="split"
                            />
                         </div>
+                        <p className="text-[11px] text-slate-500 mt-2">
+                           All sheets are together in this editor. Use <kbd className="px-1 py-0.5 bg-slate-100 rounded text-slate-700 font-mono text-[10px] border border-slate-200">Ctrl+A</kbd> to format all together, or <kbd className="px-1 py-0.5 bg-slate-100 rounded text-slate-700 font-mono text-[10px] border border-slate-200">Ctrl+Enter</kbd> to insert a page break.
+                        </p>
                      </div>
                   )}
                </div>
             </aside>
 
-            {/* Preview Section */}
-            <main className="shadow-xl rounded-2xl w-full relative flex flex-col min-w-0">
-               <div ref={toolbarPortalRef} className="w-full z-30 sticky top-32 bg-white rounded-t-2xl shadow-xs" />
-               <div ref={previewRef} className="w-full relative aspect-794/1123 overflow-hidden bg-gray-100">
-                  <Letterhead
+            {/* Preview Section: Stacked Letterhead Canvas (Supports arbitrary N pages) */}
+            <main className="w-full relative flex flex-col min-w-0">
+               {/* Sticky Tiptap Toolbar Portal for Document View */}
+               <div ref={toolbarPortalRef} className="w-full z-30 sticky top-3 bg-white rounded-2xl shadow-md border border-slate-200 mb-4 empty:hidden" />
+
+               {/* Multi-sheet helper bar in Document View */}
+               {viewMode === 'document' && pages.length > 1 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 p-3 mb-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                     <div className="flex items-center gap-2 text-slate-600 font-medium">
+                        <Layers className="w-4 h-4 text-primary" />
+                        <span>Document View: {pages.length} sheets (individual on-sheet editing)</span>
+                     </div>
+                     <button
+                        type="button"
+                        onClick={() => setViewMode('split')}
+                        title="Switch to Split View to format all sheets together"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-semibold transition cursor-pointer"
+                     >
+                        <span>Format All Together (Split View)</span>
+                     </button>
+                  </div>
+               )}
+
+               {/* Render All N Sheets */}
+               {pages.map((pageContent, idx) => (
+                  <ScaledEditorSheet
+                     key={`sheet-${idx}`}
+                     pageIndex={idx}
+                     totalPages={pages.length}
+                     content={pageContent}
+                     onContentChange={handleSheetContentChange}
                      date={date}
                      referenceNumber={referenceNumber}
-                     content={content}
-                     letterHeadRef={letterHeadRef}
+                     memoType={memoType}
                      viewMode={viewMode}
-                     setContent={(val) => {
-                        setContent(val);
-                        setIsSaved(false);
-                     }}
-                     type={memoType}
                      toolbarPortalRef={toolbarPortalRef}
+                     isActive={activeSheetIndex === idx}
+                     onFocus={handleSheetFocus}
+                     onRemoveSheet={handleRemovePage}
+                     onAutoSplit={handleAutoSplit}
+                     onRegisterRef={handleRegisterRef}
                   />
+               ))}
+
+               {/* Add Continuation Sheet Button (Placed below the last sheet) */}
+               <div className="mt-8 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 hover:border-primary/60 rounded-2xl bg-white/70 hover:bg-white transition-all duration-200 group">
+                  <button
+                     type="button"
+                     onClick={handleAddSheet}
+                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-semibold text-sm shadow-md hover:bg-primary/90 active:scale-95 transition cursor-pointer"
+                  >
+                     <PlusSquare className="w-4 h-4" />
+                     <span>+ Add Continuation Sheet (Sheet {pages.length + 1})</span>
+                  </button>
                </div>
             </main>
          </div>

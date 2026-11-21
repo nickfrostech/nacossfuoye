@@ -64,7 +64,7 @@ function AdminLoginForm() {
    };
 
    return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8 pb-12 flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8">
             <div className="flex flex-col items-center mb-8">
                <SecurityLock 
@@ -159,7 +159,7 @@ function AdminLoginForm() {
 export default function AdminLogin() {
    return (
       <Suspense fallback={
-         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
+         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8 pb-12 flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
             <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 flex justify-center">
                <div className="animate-pulse text-slate-400">Loading admin portal...</div>
             </div>
