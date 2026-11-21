@@ -72,7 +72,7 @@ export default function EventsPage() {
    }, []);
 
    return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8 pb-12">
          {/* Events & Hackathons Hero Section (solid bg-amber-700 with GroupBrainstorming watermark) */}
          <section className="relative overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-amber-700 p-6 sm:p-10 md:p-14 mb-10 text-white">
             {/* Background Watermark GroupBrainstorming SVG */}

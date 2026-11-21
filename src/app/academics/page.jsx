@@ -118,7 +118,7 @@ export default function AcademicsPage() {
       : COURSES_DATA.filter((item) => item.level === activeLevel);
 
    return (
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 md:pt-8 pb-12">
          {/* Academic & Software Materials Hero Section */}
          <section className="relative overflow-hidden rounded-3xl md:rounded-[2.5rem] bg-blue-700 p-6 sm:p-10 md:p-14 mb-10 text-white">
             {/* Background Watermark DocumentFolders SVG */}
