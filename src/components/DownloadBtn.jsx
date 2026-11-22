@@ -16,13 +16,42 @@ function DownloadBtn({ elementRef, elementRefs, referenceNumber = 'document', on
    };
 
    const getValidPapers = useCallback(() => {
-      const refs = (Array.isArray(elementRefs) && elementRefs.length > 0)
-         ? elementRefs
-         : (elementRef ? [elementRef] : []);
+      let rawRefs = [];
 
-      return refs
-         .map(r => r?.current)
+      // 1. If elementRefs is a Ref object whose .current is an array
+      if (elementRefs && typeof elementRefs === 'object' && 'current' in elementRefs) {
+         rawRefs = Array.isArray(elementRefs.current) ? elementRefs.current : [elementRefs.current];
+      }
+      // 2. If elementRefs is a function / getter
+      else if (typeof elementRefs === 'function') {
+         const res = elementRefs();
+         rawRefs = Array.isArray(res) ? res : [res];
+      }
+      // 3. If elementRefs is an array
+      else if (Array.isArray(elementRefs) && elementRefs.length > 0) {
+         rawRefs = elementRefs;
+      }
+      // 4. Single elementRef
+      else if (elementRef) {
+         rawRefs = typeof elementRef === 'object' && 'current' in elementRef ? [elementRef] : [elementRef];
+      }
+
+      // Extract DOM nodes from refs (or if already DOM nodes)
+      let papers = rawRefs
+         .map(r => (r && typeof r === 'object' && 'current' in r ? r.current : r))
          .filter(Boolean);
+
+      // 5. BULLETPROOF DOM FALLBACK:
+      // If no papers found via refs (e.g. navigation / ref timing / initial render pass),
+      // query the live DOM directly for all rendered letterhead paper sheets!
+      if (papers.length === 0 && typeof document !== 'undefined') {
+         const domElements = document.querySelectorAll('[data-letterhead-paper="true"]');
+         if (domElements && domElements.length > 0) {
+            papers = Array.from(domElements);
+         }
+      }
+
+      return papers;
    }, [elementRef, elementRefs]);
 
    const capturePaper = async (paper) => {

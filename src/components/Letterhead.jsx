@@ -131,6 +131,8 @@ function Letterhead({
       <section
          className="absolute top-0 left-0 origin-top-left overflow-hidden bg-white"
          ref={letterHeadRef}
+         data-letterhead-paper="true"
+         data-page-number={pageNumber}
          style={{ width: '794px', height: '1123px' }}
       >
          {/* Official Letterhead Background (stays 100% intact across all pages) */}
