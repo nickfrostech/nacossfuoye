@@ -104,8 +104,6 @@ const MainToolbarContent = ({
 }) => {
    return (
       <>
-         <Spacer />
-
          <ToolbarGroup>
             <UndoRedoButton action="undo" />
             <UndoRedoButton action="redo" />
@@ -180,7 +178,7 @@ const MainToolbarContent = ({
             <ImageUploadButton />
          </ToolbarGroup>
 
-         <Spacer />
+         {!isMobile && <Spacer />}
 
          {isMobile && <ToolbarSeparator />}
 
@@ -232,9 +230,12 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
 
    useEffect(() => {
       if (mode === 'document') {
-         setPortalTarget(toolbarPortalRef?.current || document.getElementById('toolbar-portal-target'))
+         const target = toolbarPortalRef?.current || (typeof document !== 'undefined' ? document.getElementById('toolbar-portal-target') : null)
+         if (target) setPortalTarget(target)
       }
    }, [mode, toolbarPortalRef])
+
+   const activePortalTarget = portalTarget || toolbarPortalRef?.current || (typeof document !== 'undefined' ? document.getElementById('toolbar-portal-target') : null)
 
    // We use a ref to prevent unnecessary state loops
    const contentRef = useRef(content);
@@ -355,14 +356,14 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
    }
 
    const renderToolbar = () => (
-      <div className="relative w-full flex items-center bg-white rounded-xl shadow-xs border border-slate-200/80 overflow-hidden group/toolbar">
+      <div className="relative w-full flex items-center bg-white rounded-xl shadow-xs border border-slate-200/90 overflow-hidden group/toolbar">
          <button
             type="button"
             tabIndex={-1}
             onClick={scrollToolbarLeft}
             aria-label="Scroll toolbar left"
             title="Scroll toolbar left"
-            className="shrink-0 h-10 px-2 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10 cursor-pointer border-r border-slate-100"
+            className="shrink-0 h-10 w-8 sm:w-9 px-1 sm:px-2 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10 cursor-pointer border-r border-slate-100 bg-white"
          >
             <ChevronLeft className="w-4 h-4" />
          </button>
@@ -370,7 +371,7 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
          <div className="flex-1 min-w-0 overflow-hidden">
             <Toolbar
                ref={toolbarRef}
-               className="w-full bg-white shadow-none border-b-0"
+               className="w-full bg-white shadow-none border-0 overflow-x-auto no-scrollbar touch-pan-x flex items-center py-0.5"
             >
                {mobileView === "main" ? (
                   <MainToolbarContent
@@ -396,7 +397,7 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
             onClick={scrollToolbarRight}
             aria-label="Scroll toolbar right"
             title="Scroll toolbar right"
-            className="shrink-0 h-10 px-2 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10 cursor-pointer border-l border-slate-100"
+            className="shrink-0 h-10 w-8 sm:w-9 px-1 sm:px-2 flex items-center justify-center text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition z-10 cursor-pointer border-l border-slate-100 bg-white"
          >
             <ChevronRight className="w-4 h-4" />
          </button>
@@ -409,7 +410,7 @@ export function SimpleEditor({ content, setContent, mode = 'split', toolbarPorta
       <div className={`simple-editor-wrapper relative ${mode === 'document' ? 'document-mode' : 'split-mode'}`}>
          <EditorContext.Provider value={editorContextValue}>
             {mode === 'document' 
-               ? (portalTarget && isActive ? createPortal(renderToolbar(), portalTarget) : null)
+               ? (activePortalTarget && isActive ? createPortal(renderToolbar(), activePortalTarget) : null)
                : renderToolbar()
             }
 
