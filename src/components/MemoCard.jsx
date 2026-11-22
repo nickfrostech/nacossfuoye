@@ -58,16 +58,33 @@ export default function MemoCard({ reference, head, date, is_published, onToggle
             <div className="mt-auto flex justify-between items-center border-t border-white/20 pt-4">
                {isAdminView ? (
                   <>
-                     <Link href={`/admin/edit/${encodeURIComponent(reference)}`} className="p-2 text-white/80 hover:text-white bg-white/5 hover:bg-white/20 rounded-full cursor-pointer transition-colors backdrop-blur-sm border border-white/10" aria-label="Edit Memo">
-                        <SquarePen size={18} />
-                     </Link>
+                     <div className="flex items-center gap-2">
+                        <Link
+                           href={`/admin/view/${encodeURIComponent(reference)}`}
+                           onClick={(e) => e.stopPropagation()}
+                           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-white bg-white/15 hover:bg-white/25 border border-white/20 transition-all shadow-2xs"
+                           title="View and Download Memo"
+                        >
+                           <Eye size={13} />
+                           <span>View</span>
+                        </Link>
+                        <Link
+                           href={`/admin/edit/${encodeURIComponent(reference)}`}
+                           onClick={(e) => e.stopPropagation()}
+                           className="p-1.5 text-white/80 hover:text-white bg-white/5 hover:bg-white/20 rounded-full cursor-pointer transition-colors backdrop-blur-sm border border-white/10"
+                           aria-label="Edit Memo"
+                           title="Edit Memo"
+                        >
+                           <SquarePen size={16} />
+                        </Link>
+                     </div>
                      <div className="flex gap-2">
                         <button
-                           onClick={(e) => { e.preventDefault(); onToggleVisibility(reference, is_published); }}
-                           className={`p-2 rounded-full cursor-pointer transition-colors backdrop-blur-sm border border-white/10 ${is_published ? 'text-white/80 hover:text-white bg-white/5 hover:bg-white/20' : 'text-white bg-white/20 hover:bg-white/30'}`}
+                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleVisibility(reference, is_published); }}
+                           className={`p-1.5 rounded-full cursor-pointer transition-colors backdrop-blur-sm border border-white/10 ${is_published ? 'text-white/80 hover:text-white bg-white/5 hover:bg-white/20' : 'text-white bg-white/20 hover:bg-white/30'}`}
                            title={is_published ? "Unpublish" : "Publish"}
                         >
-                           {is_published ? <Eye size={18} /> : <EyeOff size={18} />}
+                           {is_published ? <Eye size={16} /> : <EyeOff size={16} />}
                         </button>
                      </div>
                   </>
@@ -86,9 +103,11 @@ export default function MemoCard({ reference, head, date, is_published, onToggle
       </div>
    );
 
-   if (href && !isAdminView) {
+   const targetHref = href || (isAdminView ? `/admin/view/${encodeURIComponent(reference)}` : null);
+
+   if (targetHref) {
       return (
-         <Link href={href} className="group block h-full">
+         <Link href={targetHref} className="group block h-full">
             {CardContent}
          </Link>
       );

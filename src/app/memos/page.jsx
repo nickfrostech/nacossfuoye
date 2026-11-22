@@ -352,7 +352,7 @@ export default function MemosList() {
                      key={item.id}
                      {...item}
                      isAdminView={false}
-                     href={item.authStatus ? `/admin/edit/${encodeURIComponent(item.reference)}` : `/${encodeURIComponent(item.reference)}`}
+                     href={item.authStatus ? `/admin/view/${encodeURIComponent(item.reference)}` : `/${encodeURIComponent(item.reference)}`}
                   />
                ))}
             </div>
