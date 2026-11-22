@@ -116,19 +116,6 @@ body {
 	max-width: none;
 }
 
-.split-mode .tiptap-toolbar,
-.document-mode .tiptap-toolbar {
-	position: sticky;
-	top: 0;
-	z-index: 50;
-	background-color: #f8fafc;
-	border: 1px solid rgb(16 185 129 / 0.7); /* Green outline matching primary/70 */
-	border-radius: 0.75rem; /* rounded-xl */
-	padding: 0.5rem;
-	box-shadow: none;
-	margin-bottom: 0.5rem;
-}
-
 .simple-editor-search-and-replace {
 	position: fixed;
 	top: calc(var(--tt-toolbar-height) + 0.5rem);

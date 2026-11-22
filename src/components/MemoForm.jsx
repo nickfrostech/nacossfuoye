@@ -457,7 +457,7 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
          >
             <div className="relative z-10 flex flex-wrap items-center gap-2 sm:gap-3">
                <DownloadBtn
-                  elementRefs={paperRefs.current.slice(0, pages.length)}
+                  elementRefs={paperRefs}
                   referenceNumber={referenceNumber || 'draft'}
                   onBeforeDownload={handleBeforeDownload}
                />
@@ -618,7 +618,11 @@ export default function MemoForm({ isNew = true, initialData = {}, memoType = 'e
             {/* Preview Section: Stacked Letterhead Canvas (Supports arbitrary N pages) */}
             <main className="w-full relative flex flex-col min-w-0">
                {/* Sticky Tiptap Toolbar Portal for Document View */}
-               <div ref={toolbarPortalRef} className="w-full z-30 sticky top-3 bg-white rounded-2xl shadow-md border border-slate-200 mb-4 empty:hidden" />
+               <div
+                  id="toolbar-portal-target"
+                  ref={toolbarPortalRef}
+                  className="w-full z-30 sticky top-2 sm:top-3 mb-4 empty:hidden"
+               />
 
                {/* Multi-sheet helper bar in Document View */}
                {viewMode === 'document' && pages.length > 1 && (
