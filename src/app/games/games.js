@@ -54,6 +54,15 @@ export const GAMES = [
       releaseDate: '16/11/2026',
       description: 'Flip the tiles and find the matching shapes in as few tries as you can.',
       howToPlay: 'Tap a tile to reveal its shape, then tap a second one. If the shapes match, they stay revealed. Find all 6 pairs using as few tries as you can, and as fast as you can. Fewer tries and less time give a higher score.',
+   },
+   {
+      slug: 'batmobile',
+      name: 'Batmobile: Gotham City Pursuit',
+      developer: 'apcodesphere',
+      developerLink: 'https://github.com/apreezofficial',
+      releaseDate: '30/11/2026',
+      description: 'Dodge Gotham traffic at full speed, collect gems and clear the road with batarangs.',
+      howToPlay: 'Steer the Batmobile between three lanes with A/D or the arrow keys (or the on-screen buttons on a phone). Hold Space or the Nitro button to speed up, but nitro drains and refills slowly. Press F or the Fire button to throw a batarang and destroy the car ahead of you; you have 3 and they reload over time. Hitting traffic costs one of your 6 hull points. Collect gems for bonus points: each gem adds 50 points, and gems are saved to your wallet. Your score is distance plus 100 per car destroyed plus 50 per gem.',
    }
 ];
 

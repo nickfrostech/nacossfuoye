@@ -107,6 +107,9 @@ importers:
       react-hotkeys-hook:
         specifier: ^5.3.3
         version: 5.3.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      three:
+        specifier: 0.187.0
+        version: 0.187.0
       tiptap-extension-font-size:
         specifier: ^1.2.0
         version: 1.2.0(@tiptap/pm@3.31.3)
@@ -1911,6 +1914,9 @@ packages:
   text-segmentation@1.0.3:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
 
+  three@0.187.0:
+    resolution: {integrity: sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA==}
+
   tiptap-extension-font-size@1.2.0:
     resolution: {integrity: sha512-akVve/bIAhAf4ze6XR4sh0qV7o7XgAoPkDGumTj4SFNtjhcH61wD97ibxWQAXchJPNAV6DdzRJiuUtEgzspjyA==}
     engines: {node: '>=10'}
@@ -3643,6 +3649,8 @@ snapshots:
     dependencies:
       utrie: 1.0.2
     optional: true
+
+  three@0.187.0: {}
 
   tiptap-extension-font-size@1.2.0(@tiptap/pm@3.31.3):
     dependencies:
