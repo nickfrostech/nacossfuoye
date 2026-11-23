@@ -54,6 +54,15 @@ export const GAMES = [
       releaseDate: '16/11/2026',
       description: 'Flip the tiles and find the matching shapes in as few tries as you can.',
       howToPlay: 'Tap a tile to reveal its shape, then tap a second one. If the shapes match, they stay revealed. Find all 6 pairs using as few tries as you can, and as fast as you can. Fewer tries and less time give a higher score.',
+   },
+   {
+      slug: '2048',
+      name: '2048',
+      developer: 'apcodesphere',
+      developerLink: 'https://github.com/apreezofficial',
+      releaseDate: '23/11/2026',
+      description: 'Slide and merge matching tiles to build the biggest number you can.',
+      howToPlay: 'Swipe on a touch screen or use the arrow keys (or WASD) to slide every tile in one direction. When two tiles with the same number touch, they merge into one with double the value and add that value to your score. A new tile appears after every move. The game ends when the board is full and no more moves are possible, and your score is the total of all merges. Reach 2048 and keep going for a higher score!',
    }
 ];
 
