@@ -14,7 +14,9 @@ const NITRO_DRAIN = 26;
 const NITRO_REGEN = 12;
 const STEER_ACCEL = 42;
 const BULLET_SPEED = 90;
-const SPAWN_ENEMY_S = 1.1;
+const SPAWN_ENEMY_S = 1.5;
+const LANE_EASE = 2.5;
+const CLEAR_GAP_Z = 40;
 const SPAWN_GEM_S = 2.6;
 const HUD_EVERY_S = 0.15;
 
@@ -46,16 +48,17 @@ const makeAssets = () => {
          mark: new THREE.PlaneGeometry(0.18, 4),
       },
       mat: {
-         road: new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.4, metalness: 0.6 }),
+         road: new THREE.MeshStandardMaterial({ color: 0x2c2e3b, roughness: 0.55, metalness: 0.3 }),
          mark: new THREE.MeshBasicMaterial({ color: 0x555566 }),
-         building: new THREE.MeshStandardMaterial({ color: 0x0c0c18, roughness: 0.8 }),
-         paint: new THREE.MeshStandardMaterial({ color: 0x0a0a12, roughness: 0.3, metalness: 0.7 }),
-         canopy: new THREE.MeshStandardMaterial({ color: 0x14162a, roughness: 0.2, metalness: 0.8 }),
+         building: new THREE.MeshStandardMaterial({ color: 0x1b1d33, roughness: 0.8 }),
+         paint: new THREE.MeshStandardMaterial({ color: 0x2e3350, roughness: 0.35, metalness: 0.5 }),
+         neon: new THREE.MeshBasicMaterial({ color: 0x00e5ff }),
+         canopy: new THREE.MeshStandardMaterial({ color: 0x3a4a78, roughness: 0.15, metalness: 0.6 }),
          tyre: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }),
          headlight: new THREE.MeshBasicMaterial({ color: 0xffffcc }),
          tail: new THREE.MeshBasicMaterial({ color: 0xff2244 }),
-         enemyRed: new THREE.MeshStandardMaterial({ color: 0x5a0a14, roughness: 0.2, metalness: 0.6 }),
-         enemyBlue: new THREE.MeshStandardMaterial({ color: 0x101a33, roughness: 0.2, metalness: 0.6 }),
+         enemyRed: new THREE.MeshStandardMaterial({ color: 0xb3213a, roughness: 0.3, metalness: 0.4 }),
+         enemyBlue: new THREE.MeshStandardMaterial({ color: 0x2456b8, roughness: 0.3, metalness: 0.4 }),
          gem: new THREE.MeshBasicMaterial({ color: 0x2de2ff }),
          bullet: new THREE.MeshBasicMaterial({ color: 0x66ccff }),
          windows: new THREE.MeshBasicMaterial({ color: 0xffe9a0 }),
@@ -78,6 +81,9 @@ const makeBatmobile = (assets) => {
    addPart(car, geo.unit, mat.paint, 1.4, 0.6, 1.2).scale.set(0.5, 0.2, 1.5);
    addPart(car, geo.unit, mat.paint, -1.4, 0.6, 1.2).scale.set(0.5, 0.2, 1.5);
    addPart(car, geo.unit, mat.canopy, 0, 1.15, -0.2).scale.set(1.5, 0.5, 1.4);
+   // cyan neon trim along the sides so the player's car reads clearly against the traffic
+   addPart(car, geo.unit, mat.neon, 1.02, 0.4, 0).scale.set(0.05, 0.08, 3.6);
+   addPart(car, geo.unit, mat.neon, -1.02, 0.4, 0).scale.set(0.05, 0.08, 3.6);
    addPart(car, geo.unit, mat.headlight, 0.8, 0.7, -1.95).scale.set(0.6, 0.12, 0.1);
    addPart(car, geo.unit, mat.headlight, -0.8, 0.7, -1.95).scale.set(0.6, 0.12, 0.1);
    const wheels = [
@@ -122,14 +128,14 @@ export function createGame(canvas, { onHud, onOver }) {
    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 
    const scene = new THREE.Scene();
-   scene.background = new THREE.Color(0x03030a);
-   scene.fog = new THREE.FogExp2(0x03030a, 0.012);
+   scene.background = new THREE.Color(0x0a0b16);
+   scene.fog = new THREE.FogExp2(0x0a0b16, 0.008);
 
    const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 400);
    camera.position.set(0, 4, 9);
 
-   scene.add(new THREE.AmbientLight(0x6666aa, 1.2));
-   const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+   scene.add(new THREE.AmbientLight(0x9aa2d6, 2.4));
+   const sun = new THREE.DirectionalLight(0xdfe6ff, 2.2);
    sun.position.set(5, 20, 10);
    scene.add(sun);
 
@@ -206,12 +212,16 @@ export function createGame(canvas, { onHud, onOver }) {
       list.splice(index, 1);
    };
 
+   // Only spawn into a lane with no car near the spawn point, so traffic never walls off all three lanes
    const spawnEnemy = () => {
+      const open = LANES.filter((lane) => enemies.every((e) => e.lane !== lane || e.mesh.position.z < -CLEAR_GAP_Z));
+      if (open.length === 0) return;
+      const lane = open[Math.floor(Math.random() * open.length)];
       const car = makeEnemy(assets, Math.random() > 0.5 ? mat.enemyRed : mat.enemyBlue);
-      car.position.set(LANES[Math.floor(Math.random() * LANES.length)], 0, -170);
+      car.position.set(lane, 0, -120);
       scene.add(car);
       // how much slower than the player this car drives, as a share of the road speed
-      enemies.push({ mesh: car, ratio: 0.45 + Math.random() * 0.35 });
+      enemies.push({ mesh: car, lane, ratio: 0.15 + Math.random() * 0.4, laneT: 2 + Math.random() * 3 });
    };
 
    const spawnGemRow = () => {
@@ -284,6 +294,16 @@ export function createGame(canvas, { onHud, onOver }) {
       for (let i = enemies.length - 1; i >= 0; i--) {
          const enemy = enemies[i];
          enemy.mesh.position.z += scroll * (1 - enemy.ratio) * dt;
+         // cars drift between lanes now and then, and ease across rather than snapping
+         enemy.laneT -= dt;
+         if (enemy.laneT <= 0) {
+            enemy.laneT = 2 + Math.random() * 3;
+            const others = LANES.filter((l) => l !== enemy.lane);
+            const target = others[Math.floor(Math.random() * others.length)];
+            const clear = enemies.every((e) => e === enemy || e.lane !== target || Math.abs(e.mesh.position.z - enemy.mesh.position.z) > 8);
+            if (clear && Math.random() < 0.6) enemy.lane = target;
+         }
+         enemy.mesh.position.x = easeToward(enemy.mesh.position.x, enemy.lane, dt * LANE_EASE / 6);
          enemy.mesh.userData.wheels.forEach((w) => (w.rotation.x += scroll * dt * 2));
          if (enemy.mesh.position.z > 10) {
             remove(enemies, i);
